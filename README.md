@@ -12,6 +12,7 @@ The rickbot framework is a way to easily make and scale discord bots in the fami
 - [pip](https://pypi.org/project/pip/) (usually comes with python)
 - [git](https://git-scm.com/downloads)
 - A [mongodb](https://www.mongodb.com/) deployment (you can make a free one [here](https://www.mongodb.com/products/platform/atlas-database)) (and no i will never support any other kind of database, be better, use mongo)
+- All packages found within requirements.txt.
 
 #### Install rickbot
 
