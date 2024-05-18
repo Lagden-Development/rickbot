@@ -19,6 +19,7 @@ client = MongoClient(CONFIG["mongo"]["uri"], server_api=ServerApi("1"))
 bot_db = client["bot"]
 messages_collection = bot_db["messages"]
 money_collection = bot_db["money"]
+invites_collection = bot_db["invites"]
 
 
 def get_mongo_client():

@@ -49,7 +49,7 @@ class CustomFileFormatter(logging.Formatter):
 
 # Define the RickBot logger
 RICKLOG = logging.getLogger("rickbot")
-RICKLOG.setLevel(logging.INFO)
+RICKLOG.setLevel(logging.DEBUG)
 
 # Create a file and console handler
 file_handler = logging.FileHandler(filename="rickbot.log", mode="w")
@@ -68,6 +68,31 @@ console_handler.setFormatter(console_formatter)
 # Add the handlers to the logger
 RICKLOG.addHandler(file_handler)
 RICKLOG.addHandler(console_handler)
+
+# Define sub-loggers as constants
+RICKLOG_CMDS = logging.getLogger("rickbot.cmds")
+RICKLOG_DISCORD = logging.getLogger("rickbot.discord")
+RICKLOG_MAIN = logging.getLogger("rickbot.main")
+RICKLOG_WEBHOOK = logging.getLogger("rickbot.webhook")
+RICKLOG_BG = logging.getLogger("rickbot.bg")
+RICKLOG_HELPERS = logging.getLogger("rickbot.helpers")
+
+# Add handlers to sub-loggers
+# Currently not required as the handlers are added to the main logger
+"""
+RICKLOG_CMDS.addHandler(file_handler)
+RICKLOG_CMDS.addHandler(console_handler)
+RICKLOG_DISCORD.addHandler(file_handler)
+RICKLOG_DISCORD.addHandler(console_handler)
+RICKLOG_MAIN.addHandler(file_handler)
+RICKLOG_MAIN.addHandler(console_handler)
+RICKLOG_WEBHOOK.addHandler(file_handler)
+RICKLOG_WEBHOOK.addHandler(console_handler)
+RICKLOG_BG.addHandler(file_handler)
+RICKLOG_BG.addHandler(console_handler)
+RICKLOG_HELPERS.addHandler(file_handler)
+RICKLOG_HELPERS.addHandler(console_handler)
+"""
 
 
 def setup_discord_logging(level=logging.INFO) -> None:
@@ -94,3 +119,14 @@ def setup_discord_logging(level=logging.INFO) -> None:
     logging.getLogger("discord.client").setLevel(level)
     logging.getLogger("discord.gateway").setLevel(level)
     logging.getLogger("discord.http").setLevel(level)
+
+
+# Example usage
+if __name__ == "__main__":
+    RICKLOG.info("RickBot logging setup complete.")
+    RICKLOG_CMDS.debug("This is a debug message from the cmds sub-logger.")
+    RICKLOG_DISCORD.info("This is an info message from the discord sub-logger.")
+    RICKLOG_MAIN.warning("This is a warning message from the main sub-logger.")
+    RICKLOG_WEBHOOK.error("This is an error message from the webhook sub-logger.")
+    RICKLOG_BG.critical("This is a critical message from the background sub-logger.")
+    RICKLOG_HELPERS.info("This is an info message from the helpers sub-logger.")

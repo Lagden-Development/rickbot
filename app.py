@@ -16,9 +16,21 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 bot = RickBot()
-loop = asyncio.get_event_loop()
 
-for s in [signal.SIGTERM, signal.SIGINT]:
-    loop.add_signal_handler(s, lambda s=s: asyncio.create_task(bot.shutdown(s)))
 
-loop.run_until_complete(bot.start_bot())
+async def main():
+    for s in [signal.SIGTERM, signal.SIGINT]:
+        asyncio.get_event_loop().add_signal_handler(
+            s, lambda s=s: asyncio.create_task(bot.shutdown(s))
+        )
+
+    await bot.start_bot()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("Bot shutdown requested, exiting...")
+    except Exception as e:
+        print(f"Unhandled exception: {e}")

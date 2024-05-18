@@ -5,14 +5,17 @@ You may not use, copy, distribute, modify, or sell this code without the express
 This is the config file for RickBot.
 """
 
+intermediary = {}
+
 CONFIG = {
     "mode": "dev",  # "dev" or "prod"
+    "devs": [123456789],
     "bot": {
-        "token": "bot token",
-        "prefix": ".",
+        "token": "BOT TOKEN",
+        "prefix": "!",
         "status": {
             "type": "playing",
-            "message": "a game!",
+            "message": "a game",
         },
     },
     "behaviour": {
@@ -20,7 +23,7 @@ CONFIG = {
         # "afk_timeout": 300,
     },
     "mongo": {
-        "uri": "uri",
+        "uri": "mongodb uri",
         "bot_specific_db": "bot",
     },
 }

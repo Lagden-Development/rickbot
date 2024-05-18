@@ -7,12 +7,20 @@ This is a helper for handling all discord.py related errors.
 
 # Import the required modules
 
+# Python standard library
+from datetime import datetime
+import os
+import random
+import string
+import traceback
+
 # Third-party libraries
 import discord
 from discord.ext import commands
 
 # Helper functions
 from helpers.colors import ERROR_EMBED_COLOR
+from helpers.logs import RICKLOG_MAIN
 
 
 async def handle_error(ctx: commands.Context, error: Exception):
@@ -86,19 +94,62 @@ async def handle_error(ctx: commands.Context, error: Exception):
 
         await ctx.reply(embed=embed, mention_author=False)
 
-    elif isinstance(error, commands.CommandInvokeError):
-        embed = discord.Embed(
-            title="Error",
-            description="An error occurred while running the command.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await ctx.reply(embed=embed, mention_author=False)
-
     else:
+        # Generate a random error ID
+        error_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
         embed = discord.Embed(
-            title="Error",
-            description="An unknown error occurred; please contact staff.",
+            title="An Unexpected Error has occurred",
+            description="You should feel special, this doesn't often happen.\n\nThe developer has been notified, and a fix should be out soon.\nIf no fix has been released after a while please contact the developer and provide the below Error ID.",
+            timestamp=datetime.now(),
             color=ERROR_EMBED_COLOR,
         )
 
+        embed.add_field(name="Error", value=f"```{error}```", inline=False)
+        embed.add_field(name="Error ID", value=f"```{error_id}```", inline=False)
+
+        embed.set_footer(text="RickBot Error Logging")
+
         await ctx.reply(embed=embed, mention_author=False)
+
+        # This is a serious error, log it in the errors directory
+
+        # Ensure the errors directory exists
+        if not os.path.exists("errors"):
+            RICKLOG_MAIN.warning(
+                "The errors directory does not exist; creating it now."
+            )
+            try:
+                os.makedirs("errors")
+            except Exception as e:
+                RICKLOG_MAIN.error(
+                    f"An error occurred while creating the errors directory: {e}\nNo error log will be created."
+                )
+                return
+
+        # Log the error
+        error_file = (
+            f"errors/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}-{error_id}.txt"
+        )
+
+        with open(error_file, "w+") as f:
+            f.write(
+                "Hello! An error occurred during the running of RickBot. This is most likely a serious error, so please investigate it. If you find this errors has occurred due to an issue with the original code, please contact the developer. Otherwise, you're on your own. Good luck!\n\n"
+            )
+            f.write(f"Error: {error}\n")
+            f.write(f"Error ID: {error_id}\n")
+            f.write(f"Command: {ctx.command}\n")
+            f.write(f"Author: {ctx.author}\n")
+            f.write(f"Message: {ctx.message.content}\n")
+            f.write(f"Guild: {ctx.guild}\n")
+            f.write(f"Channel: {ctx.channel}\n")
+            f.write(f"Time: {datetime.now()}\n")
+            f.write(f"Stack Trace: {error.original}\n")
+            f.write(
+                "\n\n----------------------------------------------------\nTraceback\n----------------------------------------------------\n\n"
+            )
+            f.write(traceback.format_exc())
+
+        RICKLOG_MAIN.error(
+            f"An error occurred while running the command: {error}\nError log created at {error_file}"
+        )

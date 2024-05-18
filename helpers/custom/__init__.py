@@ -2,7 +2,7 @@
 (c) 2024 Zachariah Michael Lagden (All Rights Reserved)
 You may not use, copy, distribute, modify, or sell this code without the express permission of the author.
 
-The helpers module contains all the helper functions and classes used in rickbot.
+The helpers module contains all the custom helper functions and classes used custom cog files.
 """
 
 """Import all modules that exist in the current directory."""

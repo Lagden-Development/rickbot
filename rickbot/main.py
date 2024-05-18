@@ -5,13 +5,11 @@ You may not use, copy, distribute, modify, or sell this code without the express
 This is the main application file for RickBot.
 """
 
-# Import the required modules
-
 # Python standard library
 from datetime import datetime
 import asyncio
 import logging
-import os
+import glob
 
 # Third-party libraries
 from termcolor import colored
@@ -21,7 +19,13 @@ from discord.ext import commands
 import discord
 
 # Helper files
-from helpers.logs import RICKLOG, setup_discord_logging
+from helpers.logs import (
+    setup_discord_logging,
+    RICKLOG,
+    RICKLOG_MAIN,
+    RICKLOG_DISCORD,
+    RICKLOG_WEBHOOK,
+)
 from helpers.rickbot import rickbot_start_msg
 from helpers.errors import handle_error
 
@@ -58,11 +62,6 @@ class RickBot(commands.Bot):
         self.load_config()
 
     def setup_logging(self):
-        # Set the working directory to the directory of this file
-        abspath = os.path.abspath(__file__)
-        dname = os.path.dirname(abspath)
-        os.chdir(dname)
-        # Set up the logging
         setup_discord_logging(logging.INFO)
 
     def load_config(self):
@@ -71,16 +70,34 @@ class RickBot(commands.Bot):
         else:
             RICKLOG.setLevel(logging.INFO)
 
+    async def setup_hook(self):
+        await self.load_cogs()
+
+    async def load_cogs(self):
+        for cog_folder in glob.glob("cogs/*"):
+            cogs_loaded_from_this_folder = 0
+            if not cog_folder.startswith("_"):
+                for filename in glob.glob(f"{cog_folder}/*.py"):
+                    if not filename.startswith("_"):
+                        cog_name = f"{filename[:-3].replace('/', '.')}"
+                        await self.load_extension(cog_name)
+                        cogs_loaded_from_this_folder += 1
+
+                        RICKLOG_MAIN.debug(f"Loaded cog: {cog_name}")
+
+            RICKLOG_MAIN.info(
+                f"Loaded cog folder: {cog_folder} ({cogs_loaded_from_this_folder} cogs)"
+            )
+
     async def get_context(self, message, *, cls=None):
         return await super().get_context(message, cls=RickContext)
 
     async def on_ready(self):
-        self.user: discord.ClientUser = self.user
-
-        RICKLOG.info(
-            f"RickBot started at {colored(datetime.now(), 'light_cyan', attrs=['bold', 'underline'])}"
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        RICKLOG_MAIN.info(
+            f"RickBot started at {colored(current_time, 'light_cyan', attrs=['bold', 'underline'])}"
         )
-        RICKLOG.info("RickBot's Connection to Discord initialized.")
+        RICKLOG_DISCORD.info("RickBot's Connection to Discord initialized.")
 
         await self.set_status()
         rickbot_start_msg(self)
@@ -122,8 +139,10 @@ class RickBot(commands.Bot):
             return
 
         if message.content.startswith(
-            f"<@!{self.user.id}>"
-        ) or message.content.startswith(f"<@{self.user.id}>"):
+            f"<@!{self.user.id}>"  # type: ignore
+        ) or message.content.startswith(
+            f"<@{self.user.id}>"  # type: ignore
+        ):
             await message.reply(
                 f"Hey there, {message.author.mention}! Use `{CONFIG['bot']['prefix']}help` to see what I can do.",
                 mention_author=False,
@@ -140,16 +159,36 @@ class RickBot(commands.Bot):
 
     async def start_bot(self):
         try:
+            RICKLOG_MAIN.info("Starting RickBot...")
             await self.start(CONFIG["bot"]["token"])
         finally:
-            RICKLOG.info("RickBot has shut down gracefully.")
+            RICKLOG_MAIN.info("RickBot has shut down gracefully.")
 
     async def shutdown(self, signal):
         """Gracefully shut down the bot."""
-        RICKLOG.info(f"Received exit signal {signal.name}...")
-        RICKLOG.info("Closing Discord connection...")
+        RICKLOG_MAIN.info(
+            f"Received exit signal {signal.name} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}..."
+        )
+        RICKLOG_DISCORD.info("Closing Discord connection...")
         await self.close()
-        RICKLOG.info("Discord connection closed.")
+        RICKLOG_DISCORD.info("Discord connection closed.")
+
+    async def on_connect(self):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        RICKLOG_DISCORD.info(f"RickBot connected to Discord at {current_time}.")
+        RICKLOG_DISCORD.info(f"Session ID: {self.ws.session_id}")
+
+    async def on_disconnect(self):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        RICKLOG_DISCORD.warning(f"RickBot disconnected from Discord at {current_time}.")
+        RICKLOG_DISCORD.info("Attempting to reconnect...")
+
+    async def on_resumed(self):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        RICKLOG_DISCORD.info(
+            f"RickBot resumed connection to Discord at {current_time}."
+        )
+        RICKLOG_DISCORD.info(f"Resumed Session ID: {self.ws.session_id}")
 
     async def grab_channel_webhook(
         self, channel: discord.TextChannel
@@ -198,10 +237,12 @@ class RickBot(commands.Bot):
         # Try to send the message
         # Allow 3 attempts
 
-        for _ in range(3):
+        for attempt in range(3):
             try:
                 await webhook.send(**kwargs)
                 return
             except discord.HTTPException as e:
-                RICKLOG.error(f"Failed to send message to channel {channel}: {e}")
+                RICKLOG_WEBHOOK.error(
+                    f"Failed to send webhook message to channel {channel} on attempt ({str(attempt)}): {e}"
+                )
                 await asyncio.sleep(1)
