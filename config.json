@@ -1,0 +1,24 @@
+{
+  "mode": "dev",
+  "devs": [1234567890, 1234567890],
+  "repo": {
+    "if you are using a repo, you can put the repo link here": "it allows the update command to work",
+    "just make sure": "that the repo is public",
+    "url": "https://github.com/zachlagden/rickbot"
+  },
+  "bot": {
+    "token": "TOKEN",
+    "prefix": "!",
+    "status": {
+      "type": "playing",
+      "message": "a game"
+    }
+  },
+  "behaviour": {
+    "continue_to_load_cogs_after_failure": false
+  },
+  "mongo": {
+    "uri": "MONGO_URI",
+    "bot_specific_db": "bot"
+  }
+}

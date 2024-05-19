@@ -19,8 +19,8 @@ from termcolor import colored
 # discord.py library
 from discord.ext.commands import Bot
 
-# Get the rickbot logger
-RICKLOG = logging.getLogger("rickbot")
+# Helpers
+from helpers.logs import RICKLOG
 
 # Functions
 

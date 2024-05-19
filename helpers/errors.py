@@ -9,8 +9,10 @@ This is a helper for handling all discord.py related errors.
 
 # Python standard library
 from datetime import datetime
+from requests.auth import HTTPBasicAuth
 import os
 import random
+import requests
 import string
 import traceback
 
@@ -21,6 +23,32 @@ from discord.ext import commands
 # Helper functions
 from helpers.colors import ERROR_EMBED_COLOR
 from helpers.logs import RICKLOG_MAIN
+
+# Config
+from config import CUSTOM_CONFIG
+
+
+def upload_to_paste(error_file_path):
+    base_url = CUSTOM_CONFIG["apis"]["zl_paste"]["url"]
+    paste_route = CUSTOM_CONFIG["apis"]["zl_paste"]["routes"]["paste"]
+    auth = CUSTOM_CONFIG["apis"]["zl_paste"]["auth"]
+    documents_url = f"{base_url}{paste_route}"
+
+    with open(error_file_path, "r") as file:
+        content = file.read()
+
+    response = requests.post(
+        documents_url,
+        data=content,
+        auth=HTTPBasicAuth(auth["username"], auth["password"]),
+    )
+
+    if response.status_code == 200:
+        return f"{base_url}/{response.json()['key']}"
+    else:
+        RICKLOG_MAIN.critical(f"Failed to upload to Paste: {response.status_code}")
+        RICKLOG_MAIN.exception(response.text)
+        return None
 
 
 async def handle_error(ctx: commands.Context, error: Exception):
@@ -94,13 +122,24 @@ async def handle_error(ctx: commands.Context, error: Exception):
 
         await ctx.reply(embed=embed, mention_author=False)
 
+    elif isinstance(error, OverflowError):
+        embed = discord.Embed(
+            title="Error",
+            description="The number you entered is too large.",
+            color=ERROR_EMBED_COLOR,
+        )
+
+        await ctx.reply(embed=embed, mention_author=False)
+
     else:
         # Generate a random error ID
         error_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
         embed = discord.Embed(
             title="An Unexpected Error has occurred",
-            description="You should feel special, this doesn't often happen.\n\nThe developer has been notified, and a fix should be out soon.\nIf no fix has been released after a while please contact the developer and provide the below Error ID.",
+            description="You should feel special, this doesn't often happen.\n\nThe developer has been notified, "
+            "and a fix should be out soon.\nIf no fix has been released after a while please contact the "
+            "developer and provide the below Error ID.",
             timestamp=datetime.now(),
             color=ERROR_EMBED_COLOR,
         )
@@ -109,8 +148,6 @@ async def handle_error(ctx: commands.Context, error: Exception):
         embed.add_field(name="Error ID", value=f"```{error_id}```", inline=False)
 
         embed.set_footer(text="RickBot Error Logging")
-
-        await ctx.reply(embed=embed, mention_author=False)
 
         # This is a serious error, log it in the errors directory
 
@@ -134,7 +171,9 @@ async def handle_error(ctx: commands.Context, error: Exception):
 
         with open(error_file, "w+") as f:
             f.write(
-                "Hello! An error occurred during the running of RickBot. This is most likely a serious error, so please investigate it. If you find this errors has occurred due to an issue with the original code, please contact the developer. Otherwise, you're on your own. Good luck!\n\n"
+                "Hello! An error occurred during the running of RickBot.\nThis is most likely a serious error, "
+                "so please investigate it.\nIf you find this errors has occurred due to an issue with the original "
+                "code, please contact the developer.\nOtherwise, you're on your own. Good luck!\n\n"
             )
             f.write(f"Error: {error}\n")
             f.write(f"Error ID: {error_id}\n")
@@ -144,12 +183,23 @@ async def handle_error(ctx: commands.Context, error: Exception):
             f.write(f"Guild: {ctx.guild}\n")
             f.write(f"Channel: {ctx.channel}\n")
             f.write(f"Time: {datetime.now()}\n")
-            f.write(f"Stack Trace: {error.original}\n")
             f.write(
-                "\n\n----------------------------------------------------\nTraceback\n----------------------------------------------------\n\n"
+                "\n\n----------------------------------------------------\nTraceback\n"
+                "----------------------------------------------------\n\n\n"
             )
             f.write(traceback.format_exc())
 
-        RICKLOG_MAIN.error(
-            f"An error occurred while running the command: {error}\nError log created at {error_file}"
-        )
+        paste_link = upload_to_paste(error_file)
+
+        if paste_link:
+            embed.add_field(
+                name="Error Log",
+                value=f"[View as Paste]({paste_link})",
+                inline=False,
+            )
+
+        await ctx.reply(embed=embed, mention_author=False)
+
+        RICKLOG_MAIN.error(f"An error occurred while running the command: {error}")
+        RICKLOG_MAIN.error(f"Error log created at {error_file}")
+        RICKLOG_MAIN.error(f"Paste link: {paste_link}")

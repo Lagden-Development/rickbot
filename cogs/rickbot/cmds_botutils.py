@@ -129,6 +129,17 @@ class RickBot_BotUtilsCommands(commands.Cog):
 
         subprocess.run(["systemctl", "restart", "betterhoodbot"])
 
+    @commands.command()
+    @commands.check(botownercheck)
+    async def testerror(self, ctx: commands.Context):
+        """
+        Cause an error.
+        """
+
+        await ctx.message.add_reaction("👌")
+
+        raise Exception("Test error.")
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(RickBot_BotUtilsCommands(bot))
