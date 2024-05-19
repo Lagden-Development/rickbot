@@ -28,29 +28,6 @@ from helpers.logs import RICKLOG_MAIN
 from config import CUSTOM_CONFIG
 
 
-def upload_to_paste(error_file_path):
-    base_url = CUSTOM_CONFIG["apis"]["zl_paste"]["url"]
-    paste_route = CUSTOM_CONFIG["apis"]["zl_paste"]["routes"]["paste"]
-    auth = CUSTOM_CONFIG["apis"]["zl_paste"]["auth"]
-    documents_url = f"{base_url}{paste_route}"
-
-    with open(error_file_path, "r") as file:
-        content = file.read()
-
-    response = requests.post(
-        documents_url,
-        data=content,
-        auth=HTTPBasicAuth(auth["username"], auth["password"]),
-    )
-
-    if response.status_code == 200:
-        return f"{base_url}/{response.json()['key']}"
-    else:
-        RICKLOG_MAIN.critical(f"Failed to upload to Paste: {response.status_code}")
-        RICKLOG_MAIN.exception(response.text)
-        return None
-
-
 async def handle_error(ctx: commands.Context, error: Exception):
     """
     Handle errors that occur in the bot.
@@ -189,17 +166,7 @@ async def handle_error(ctx: commands.Context, error: Exception):
             )
             f.write(traceback.format_exc())
 
-        paste_link = upload_to_paste(error_file)
-
-        if paste_link:
-            embed.add_field(
-                name="Error Log",
-                value=f"[View as Paste]({paste_link})",
-                inline=False,
-            )
-
         await ctx.reply(embed=embed, mention_author=False)
 
         RICKLOG_MAIN.error(f"An error occurred while running the command: {error}")
         RICKLOG_MAIN.error(f"Error log created at {error_file}")
-        RICKLOG_MAIN.error(f"Paste link: {paste_link}")
