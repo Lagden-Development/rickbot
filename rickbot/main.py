@@ -32,6 +32,10 @@ from helpers.errors import handle_error
 # Configuration file
 from config import CONFIG
 
+# Configurations (Not usally changed, so not in the config file)
+
+COMMAND_ERRORS_TO_IGNORE = (commands.CommandNotFound,)
+
 # Custom exceptions
 
 
@@ -41,6 +45,13 @@ class WebhookFailedError(Exception):
     """
 
     pass
+
+
+# Functions
+
+
+def get_prefix(bot, message):
+    return commands.when_mentioned_or(CONFIG["bot"]["prefix"])(bot, message)
 
 
 # Classes
@@ -55,7 +66,11 @@ class RickContext(commands.Context):
 class RickBot(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix=CONFIG["bot"]["prefix"], intents=discord.Intents.all()
+            command_prefix=get_prefix,
+            case_insensitive=True,
+            strip_after_prefix=True,
+            allowed_mentions=discord.AllowedMentions(everyone=False, roles=False),
+            intents=discord.Intents.all(),
         )
 
         self.setup_logging()
@@ -135,7 +150,12 @@ class RickBot(commands.Bot):
 
     async def on_message(self, message):
         # Process commands and check for mentions
-        if message.author == self.user or message.author.bot or message.guild is None:
+        if (
+            message.author == self.user
+            or message.author.bot
+            or message.guild is None
+            or message.webhook_id
+        ):
             return
 
         if message.content.startswith(
@@ -153,8 +173,11 @@ class RickBot(commands.Bot):
 
     async def on_command_error(self, ctx, error):
         # Error handling for commands without specific error handlers
-        if hasattr(ctx.command, "on_error"):
+        if hasattr(ctx.command, "on_error") or isinstance(
+            error, COMMAND_ERRORS_TO_IGNORE
+        ):
             return
+
         await handle_error(ctx, error)
 
     async def start_bot(self):
