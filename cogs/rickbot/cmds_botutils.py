@@ -120,17 +120,6 @@ class RickBot_BotUtilsCommands(commands.Cog):
 
     @commands.command()
     @commands.check(botownercheck)
-    async def restart(self, ctx: commands.Context):
-        """
-        Restart the bot.
-        """
-        embed = discord.Embed(title="Restarting...", color=MAIN_EMBED_COLOR)
-        await ctx.reply(embed=embed, mention_author=False)
-
-        subprocess.run(["systemctl", "restart", "betterhoodbot"])
-
-    @commands.command()
-    @commands.check(botownercheck)
     async def testerror(self, ctx: commands.Context):
         """
         Cause an error.
