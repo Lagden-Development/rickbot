@@ -90,8 +90,7 @@ Rickbot is designed to help you build scalable and maintainable Discord bots wit
         },
     },
     "behaviour": {
-        "continue_to_load_cogs_after_failure": False,
-        # "afk_timeout": 300,
+        "continue_to_load_cogs_after_failure": false,
     },
     "mongo": {
         "uri": "mongodb uri",
