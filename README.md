@@ -159,10 +159,6 @@ collection = db['example']
 - **Bot Not Responding:** Check token validity and bot permissions.
 - **Database Errors:** Verify MongoDB URI and database status.
 
-Sure, here's an expanded Contributing section for your README:
-
----
-
 ## Contributing
 
 I welcome contributions of all kinds to improve Rickbot. Whether you're fixing bugs, adding new features, or improving documentation, your efforts are highly appreciated. Follow these guidelines to contribute effectively.
