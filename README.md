@@ -2,7 +2,7 @@
 
 ## ![](https://i.zachlagden.uk/rickbot/cover.webp)
 
-Rickbot is an advanced framework for creating complex (or simple) Discord bots quickly and efficiently using discord.py. This README provides comprehensive documentation on setup, usage, and contributing.
+Rickbot is an advanced framework for creating complex (or simple) Discord bots quickly and efficiently using discord.py.
 
 ## Table of Contents
 
