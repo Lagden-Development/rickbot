@@ -168,7 +168,7 @@ I welcome contributions of all kinds to improve Rickbot. Whether you're fixing b
 1. **Fork the Repository**: Create a personal copy of the repository by clicking the "Fork" button.
 2. **Clone Your Fork**: Clone the repository to your local machine using:
    ```bash
-   git clone https://github.com/zachlagden/rickbot.git
+   git clone https://github.com/Lagden-Development/rickbot.git
    ```
 3. **Create a Branch**: Always create a new branch for your changes:
    ```bash
