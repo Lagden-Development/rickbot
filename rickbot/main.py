@@ -237,8 +237,8 @@ class RickBot(commands.Bot):
         # If there are no webhooks created by the bot, create a new one
         if not bot_webhooks:
             webhook = await channel.create_webhook(
-                name="BHB Logging",
-                reason="Creating new webhook for logging.",
+                name=self.user.display_name,
+                reason=f"Creating new webhook for {self.user.display_name}",
             )
         else:
             webhook = bot_webhooks[0]
