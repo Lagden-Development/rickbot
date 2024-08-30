@@ -116,6 +116,11 @@ class RickBot(commands.Bot):
 
         await self.set_status()
         rickbot_start_msg(self)
+        print()
+
+        RICKLOG_DISCORD.info("Syncing commands...")
+        await self.tree.sync()
+        RICKLOG_DISCORD.info("Commands synced.")
 
     async def set_status(self):
         """
