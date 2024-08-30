@@ -9,10 +9,8 @@ This is a helper for handling all discord.py related errors.
 
 # Python standard library
 from datetime import datetime
-from requests.auth import HTTPBasicAuth
 import os
 import random
-import requests
 import string
 import traceback
 
@@ -28,7 +26,7 @@ from helpers.logs import RICKLOG_MAIN
 from config import CUSTOM_CONFIG
 
 
-async def handle_error(ctx: commands.Context, error: Exception):
+async def handle_error(ctx: commands.Context, error: discord.DiscordException):
     """
     Handle errors that occur in the bot.
 
@@ -146,6 +144,11 @@ async def handle_error(ctx: commands.Context, error: Exception):
             f"errors/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}-{error_id}.txt"
         )
 
+        orignal_error = error.original
+        traceback_error = traceback.format_exception(
+            type(orignal_error), orignal_error, orignal_error.__traceback__
+        )
+
         with open(error_file, "w+") as f:
             f.write(
                 "Hello! An error occurred during the running of RickBot.\nThis is most likely a serious error, "
@@ -164,7 +167,7 @@ async def handle_error(ctx: commands.Context, error: Exception):
                 "\n\n----------------------------------------------------\nTraceback\n"
                 "----------------------------------------------------\n\n\n"
             )
-            f.write(traceback.format_exc())
+            f.write("".join(traceback_error))
 
         await ctx.reply(embed=embed, mention_author=False)
 
