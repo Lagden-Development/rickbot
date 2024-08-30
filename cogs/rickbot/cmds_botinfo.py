@@ -163,6 +163,19 @@ class RickBot_BotInfoCommands(commands.Cog):
 
             await ctx.message.reply(embed=embed, mention_author=False)
 
+    @commands.command(name="ping")
+    async def _ping(self, ctx):
+        """
+        Check the bot's latency.
+        """
+        embed = discord.Embed(
+            title="Pong!",
+            description=f"Latency: {round(self.bot.latency * 1000)}ms",
+            color=MAIN_EMBED_COLOR,
+        )
+
+        await ctx.message.reply(embed=embed, mention_author=False)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(RickBot_BotInfoCommands(bot))
