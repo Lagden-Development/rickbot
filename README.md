@@ -228,4 +228,4 @@ If you encounter issues or have questions about Rickbot, we are here to help! Ho
 
 ## License
 
-This project is licensed under the terms of the non-commercial open-source license. You can view the full license [here](https://github.com/zachlagden/zachlagden/blob/main/LICENCE).
+This project is licensed under the terms of the non-commercial open-source license. You can view the full license [here](https://github.com/Lagden-Development/.github/blob/main/LICENSE).
