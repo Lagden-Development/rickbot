@@ -26,7 +26,7 @@ class RickBot_BotUtilsCommands(commands.Cog):
         self.bot = bot
 
     def botownercheck(ctx):
-        return ctx.author.id in CONFIG["devs"]
+        return ctx.author.id == int(CONFIG["MAIN"]["dev"])
 
     @commands.command()
     @commands.check(botownercheck)

@@ -7,6 +7,7 @@ These commands are restricted to bot developers only for security purposes.
 """
 
 # Python standard library
+import os
 import subprocess
 
 # Third-party libraries
@@ -37,6 +38,13 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         """
         self.bot = bot
 
+        # Check the mode in the config file
+        if CONFIG["MAIN"]["mode"] != "dev":
+            # Disable the commands if the bot is not in development mode
+            self.eval = self.exec = self.cmd = self.testerror = self.restart = (
+                self.disabled_command
+            )
+
     def botownercheck(interaction: discord.Interaction) -> bool:
         """
         Checks if the user who invoked the command is a bot developer.
@@ -47,7 +55,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         Returns:
             bool: True if the user is a bot developer, False otherwise.
         """
-        return interaction.user.id in CONFIG["devs"]
+        return interaction.user.id == int(CONFIG["MAIN"]["dev"])
 
     async def _send_embed(self, interaction, title, description, color):
         """
@@ -100,7 +108,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
             await self._send_embed(
                 interaction,
                 "Error",
-                "Only the bot developer can run this command as it is dangerous.",
+                "Only the bot developer can run this command.",
                 ERROR_EMBED_COLOR,
             )
         else:
@@ -146,7 +154,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
             await self._send_embed(
                 interaction,
                 "Error",
-                "Only the bot developer can run this command as it is dangerous.",
+                "Only the bot developer can run this command.",
                 ERROR_EMBED_COLOR,
             )
         else:
@@ -191,7 +199,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
             await self._send_embed(
                 interaction,
                 "Error",
-                "Only the bot developer can run this command as it is dangerous.",
+                "Only the bot developer can run this command.",
                 ERROR_EMBED_COLOR,
             )
         else:
@@ -234,6 +242,30 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         else:
             # Handle other errors using the global error handler
             await handle_error(interaction, error)
+
+    @app_commands.command(
+        name="restart", description="Restart the bot. Restricted to bot developers."
+    )
+    @commands.check(botownercheck)
+    async def restart(self, interaction: discord.Interaction):
+        """
+        Restarts the bot.
+
+        Args:
+            ctx (commands.Context): The context of the command.
+        """
+
+        if not CONFIG["advanced"]["linux_service_name"]:
+            return await interaction.response.send_message(
+                "The Linux service name is not set in the config file.", ephemeral=True
+            )
+
+        await interaction.response.send_message("Restarting the bot...", ephemeral=True)
+
+        # Restart the bot using the Linux service
+        os.system(
+            "systemctl restart {}".format(CONFIG["advanced"]["linux_service_name"])
+        )
 
 
 async def setup(bot: commands.Bot):

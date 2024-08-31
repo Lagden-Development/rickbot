@@ -60,7 +60,7 @@ class RickBot_BotInfoCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.GITHUB_REPO = CONFIG["repo"]["url"]
+        self.GITHUB_REPO = CONFIG["REPO"]["url"]
 
         if self.GITHUB_REPO is not None:
             self.GITHUB_API = convert_repo_url_to_api(self.GITHUB_REPO)

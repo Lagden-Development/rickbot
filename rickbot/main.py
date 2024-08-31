@@ -51,7 +51,7 @@ class WebhookFailedError(Exception):
 
 
 def get_prefix(bot, message):
-    return commands.when_mentioned_or(CONFIG["bot"]["prefix"])(bot, message)
+    return commands.when_mentioned_or(CONFIG["BOT"]["prefix"])(bot, message)
 
 
 # Classes
@@ -80,7 +80,7 @@ class RickBot(commands.Bot):
         setup_discord_logging(logging.INFO)
 
     def load_config(self):
-        if CONFIG["mode"] == "dev":
+        if CONFIG["MAIN"]["mode"] == "dev":
             RICKLOG.setLevel(logging.DEBUG)
         else:
             RICKLOG.setLevel(logging.INFO)
@@ -127,8 +127,8 @@ class RickBot(commands.Bot):
         Update the bot's status based on the configuration file.
         """
 
-        status_type = CONFIG["bot"]["status"]["type"]
-        message = CONFIG["bot"]["status"]["message"]
+        status_type = CONFIG["BOT"]["status_type"]
+        message = CONFIG["BOT"]["status_text"]
 
         if status_type == "playing":
             await self.change_presence(activity=discord.Game(name=message))
@@ -148,7 +148,7 @@ class RickBot(commands.Bot):
             )
 
         elif status_type == "streaming":
-            url = CONFIG["bot"]["status"]["url"]
+            url = CONFIG["BOT"]["status_url"]
             await self.change_presence(
                 activity=discord.Streaming(name=message, url=url)
             )
@@ -169,7 +169,7 @@ class RickBot(commands.Bot):
             f"<@{self.user.id}>"  # type: ignore
         ):
             await message.reply(
-                f"Hey there, {message.author.mention}! Use `{CONFIG['bot']['prefix']}help` to see what I can do.",
+                f"Hey there, {message.author.mention}! Use `{CONFIG['BOT']['prefix']}help` to see what I can do.",
                 mention_author=False,
             )
             return
@@ -188,7 +188,7 @@ class RickBot(commands.Bot):
     async def start_bot(self):
         try:
             RICKLOG_MAIN.info("Starting RickBot...")
-            await self.start(CONFIG["bot"]["token"])
+            await self.start(CONFIG["BOT"]["token"])
         finally:
             RICKLOG_MAIN.info("RickBot has shut down gracefully.")
 
