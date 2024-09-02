@@ -25,8 +25,22 @@ from helpers.colors import (
 from helpers.errors import handle_error  # Custom error handling function
 
 # Config
-# ------s
+# ------
 from config import CONFIG  # Imports the bot's configuration settings
+
+
+# Helper Functions
+def botownercheck(ctx: commands.Context) -> bool:
+    """
+    Check if the user is the bot owner.
+
+    Args:
+    ctx (commands.Context): The command context.
+
+    Returns:
+    bool: True if the user is the bot owner, False otherwise.
+    """
+    return ctx.author.id == int(CONFIG["MAIN"]["dev"])
 
 
 # Cog
@@ -42,18 +56,6 @@ class RickBot_BotUtilsCommands(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-
-    def botownercheck(ctx: commands.Context) -> bool:
-        """
-        Check if the user is the bot owner.
-
-        Args:
-        ctx (commands.Context): The command context.
-
-        Returns:
-        bool: True if the user is the bot owner, False otherwise.
-        """
-        return ctx.author.id == int(CONFIG["MAIN"]["dev"])
 
     @commands.command()
     @commands.check(botownercheck)

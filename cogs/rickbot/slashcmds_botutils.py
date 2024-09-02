@@ -39,6 +39,20 @@ from config import (
 )  # CONFIG is a configuration object used to access settings and constants across the bot.
 
 
+# Helper Functions
+def botownercheck(interaction: discord.Interaction) -> bool:
+    """
+    Checks if the user who invoked the command is a bot developer.
+
+    Args:
+        interaction (discord.Interaction): The interaction that triggered the command.
+
+    Returns:
+        bool: True if the user is a bot developer, False otherwise.
+    """
+    return interaction.user.id == int(CONFIG["MAIN"]["dev"])
+
+
 # Cog
 class RickBot_BotUtilsSlashCommands(commands.Cog):
     """
@@ -58,21 +72,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         # Check the mode in the config file
         if CONFIG["MAIN"]["mode"] != "dev":
             # Disable the commands if the bot is not in development mode
-            self.eval = self.exec = self.cmd = self.testerror = self.restart = (
-                self.disabled_command
-            )
-
-    def botownercheck(interaction: discord.Interaction) -> bool:
-        """
-        Checks if the user who invoked the command is a bot developer.
-
-        Args:
-            interaction (discord.Interaction): The interaction that triggered the command.
-
-        Returns:
-            bool: True if the user is a bot developer, False otherwise.
-        """
-        return interaction.user.id == int(CONFIG["MAIN"]["dev"])
+            pass
 
     async def _send_embed(
         self, interaction: discord.Interaction, title: str, description: str, color: int
@@ -115,7 +115,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
 
     @eval.error
     async def eval_error(
-        self, interaction: discord.Interaction, error: commands.CommandError
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
         """
         Handles errors for the eval command.
@@ -163,7 +163,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
 
     @exec.error
     async def exec_error(
-        self, interaction: discord.Interaction, error: commands.CommandError
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
         """
         Handles errors for the exec command.
@@ -210,7 +210,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
 
     @cmd.error
     async def cmd_error(
-        self, interaction: discord.Interaction, error: commands.CommandError
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
         """
         Handles errors for the cmd command.
@@ -244,12 +244,14 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
             interaction (discord.Interaction): The interaction that triggered the command.
         """
         # React to the interaction message (This will raise an error since it is a slash command)
-        await interaction.response.send_message("Raising a test error...")
+        await interaction.response.send_message(
+            "Raising a test error...", ephemeral=True
+        )
         raise Exception("Test error raised.")
 
     @testerror.error
     async def testerror_error(
-        self, interaction: discord.Interaction, error: commands.CommandError
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
         """
         Handles errors for the testerror command.
@@ -273,7 +275,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
     @app_commands.command(
         name="restart", description="Restart the bot. Restricted to bot developers."
     )
-    @commands.check(botownercheck)
+    @app_commands.check(botownercheck)
     async def restart(self, interaction: discord.Interaction) -> None:
         """
         Restarts the bot.
