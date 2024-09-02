@@ -1,20 +1,32 @@
 """
-(c) 2024 Zachariah Michael Lagden (All Rights Reserved)
-You may not use, copy, distribute, modify, or sell this code without the express permission of the author.
+(c) 2024 Lagden Development (All Rights Reserved)
+Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
+See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
-This is a helper for logging.
+This script provides a custom logging setup for RickBot, including formatters with
+ANSI color support for console output, and a cleaner formatter for log files.
 """
 
 # Import the required modules
 
-# Python standard library
-import logging
-import re
+# Python Standard Library
+# -----------------------
+import logging  # Handles the logging operations, allowing the output of messages to different destinations.
+import re  # Provides regular expression matching operations for strings.
+
 
 # Helper functions
-
-
 def remove_ansi_escape_sequences(s: str) -> str:
+    """
+    Removes ANSI escape sequences from a string. This is useful for cleaning up
+    log messages before saving them to a file, ensuring no color codes are stored.
+
+    Args:
+        s (str): The string from which to remove ANSI escape sequences.
+
+    Returns:
+        str: The cleaned string with no ANSI escape sequences.
+    """
     # ANSI escape sequences regex pattern
     ansi_escape_pattern = re.compile(r"\x1B[@-_][0-?]*[ -/]*[@-~]")
     return ansi_escape_pattern.sub("", s)
@@ -22,6 +34,15 @@ def remove_ansi_escape_sequences(s: str) -> str:
 
 # Custom formatter class with colors
 class CustomFormatter(logging.Formatter):
+    """
+    A custom logging formatter that adds color to log messages using ANSI escape sequences.
+    This is particularly useful for enhancing readability when viewing logs in the console.
+
+    Attributes:
+        COLORS (dict): A dictionary mapping log levels to their respective ANSI color codes.
+        RESET (str): The ANSI code to reset the color back to the default.
+    """
+
     # ANSI escape sequences for colors
     COLORS = {
         "DEBUG": "\033[1;97m",  # Bold White
@@ -34,51 +55,102 @@ class CustomFormatter(logging.Formatter):
     }
     RESET = "\033[0m"
 
-    def format(self, record):
-        log_fmt = f'{self.COLORS.get("DATE")}%(asctime)s{self.RESET} {self.COLORS.get(record.levelname, "")}%(levelname)s{self.RESET}     {self.COLORS.get("NAME")}%(name)s{self.RESET} %(message)s'
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Formats a log record with colors for different log levels.
+
+        Args:
+            record (logging.LogRecord): The log record to format.
+
+        Returns:
+            str: The formatted log message with ANSI color codes.
+        """
+        log_fmt = (
+            f'{self.COLORS.get("DATE")}%(asctime)s{self.RESET} '
+            f'{self.COLORS.get(record.levelname, "")}%(levelname)s{self.RESET}     '
+            f'{self.COLORS.get("NAME")}%(name)s{self.RESET} %(message)s'
+        )
         formatter = logging.Formatter(log_fmt, "%Y-%m-%d %H:%M:%S")
         return formatter.format(record)
 
 
 # Custom formatter that removes ANSI colors
 class CustomFileFormatter(logging.Formatter):
-    def format(self, record):
+    """
+    A custom logging formatter that strips ANSI color codes from log messages.
+    This is used for log files to ensure that no unwanted color codes are saved.
+
+    Methods:
+        format(record): Strips ANSI codes from the formatted log message.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Formats a log record by removing any ANSI color codes.
+
+        Args:
+            record (logging.LogRecord): The log record to format.
+
+        Returns:
+            str: The formatted log message without ANSI color codes.
+        """
         original_format = super().format(record)
         return remove_ansi_escape_sequences(original_format)
 
 
 # Define the RickBot logger
-RICKLOG = logging.getLogger("rickbot")
-RICKLOG.setLevel(logging.DEBUG)
+RICKLOG = logging.getLogger("rickbot")  # The main logger for RickBot.
+RICKLOG.setLevel(
+    logging.DEBUG
+)  # Set the default logging level to DEBUG for comprehensive logging.
 
 # Create a file and console handler
-file_handler = logging.FileHandler(filename="rickbot.log", mode="w")
-console_handler = logging.StreamHandler()
+file_handler = logging.FileHandler(
+    filename="rickbot.log", mode="w"
+)  # File handler to write logs to a file.
+console_handler = (
+    logging.StreamHandler()
+)  # Console handler to output logs to the console.
 
 # Create formatters
 file_formatter = CustomFileFormatter(
     "%(asctime)s %(levelname)s     %(name)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
-console_formatter = CustomFormatter()
+)  # Formatter for the file handler, no colors.
+console_formatter = CustomFormatter()  # Formatter for the console handler, with colors.
 
 # Set formatters to handlers
-file_handler.setFormatter(file_formatter)
-console_handler.setFormatter(console_formatter)
+file_handler.setFormatter(
+    file_formatter
+)  # Attach the file formatter to the file handler.
+console_handler.setFormatter(
+    console_formatter
+)  # Attach the console formatter to the console handler.
 
 # Add the handlers to the logger
-RICKLOG.addHandler(file_handler)
-RICKLOG.addHandler(console_handler)
+RICKLOG.addHandler(file_handler)  # Add the file handler to the main RickBot logger.
+RICKLOG.addHandler(
+    console_handler
+)  # Add the console handler to the main RickBot logger.
 
 # Define sub-loggers as constants
-RICKLOG_CMDS = logging.getLogger("rickbot.cmds")
-RICKLOG_DISCORD = logging.getLogger("rickbot.discord")
-RICKLOG_MAIN = logging.getLogger("rickbot.main")
-RICKLOG_WEBHOOK = logging.getLogger("rickbot.webhook")
-RICKLOG_BG = logging.getLogger("rickbot.bg")
-RICKLOG_HELPERS = logging.getLogger("rickbot.helpers")
+RICKLOG_CMDS = logging.getLogger("rickbot.cmds")  # Sub-logger for commands.
+RICKLOG_DISCORD = logging.getLogger(
+    "rickbot.discord"
+)  # Sub-logger for Discord-related logs.
+RICKLOG_MAIN = logging.getLogger(
+    "rickbot.main"
+)  # Sub-logger for main application logs.
+RICKLOG_WEBHOOK = logging.getLogger(
+    "rickbot.webhook"
+)  # Sub-logger for webhook-related logs.
+RICKLOG_BG = logging.getLogger("rickbot.bg")  # Sub-logger for background task logs.
+RICKLOG_HELPERS = logging.getLogger(
+    "rickbot.helpers"
+)  # Sub-logger for helper function logs.
 
 # Add handlers to sub-loggers
-# Currently not required as the handlers are added to the main logger
+# Currently, this is not required as the handlers are added to the main logger,
+# but it's here in case of future needs or changes in how logging is handled.
 """
 RICKLOG_CMDS.addHandler(file_handler)
 RICKLOG_CMDS.addHandler(console_handler)
@@ -95,17 +167,17 @@ RICKLOG_HELPERS.addHandler(console_handler)
 """
 
 
-def setup_discord_logging(level=logging.INFO) -> None:
+def setup_discord_logging(level: int = logging.INFO) -> None:
     """
-    Sets the levels for all discord.py related loggers.
+    Sets the logging levels for all discord.py related loggers.
 
     Args:
-        level (int): The logging level to set.
+        level (int): The logging level to set. Must be one of the standard logging levels:
+                     DEBUG, INFO, WARNING, ERROR, or CRITICAL.
 
     Returns:
         None
     """
-
     if level not in {
         logging.DEBUG,
         logging.INFO,
@@ -121,7 +193,7 @@ def setup_discord_logging(level=logging.INFO) -> None:
     logging.getLogger("discord.http").setLevel(level)
 
 
-# Example usage
+# Example usage of the logging setup
 if __name__ == "__main__":
     RICKLOG.info("RickBot logging setup complete.")
     RICKLOG_CMDS.debug("This is a debug message from the cmds sub-logger.")

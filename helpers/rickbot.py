@@ -1,6 +1,7 @@
 """
-(c) 2024 Zachariah Michael Lagden (All Rights Reserved)
-You may not use, copy, distribute, modify, or sell this code without the express permission of the author.
+(c) 2024 Lagden Development (All Rights Reserved)
+Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
+See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
 This is a helper file full of RickBot specific constants and functions.
 
@@ -10,28 +11,50 @@ RickBot is RickBot, and RickBot is perfect. No need to change anything.
 
 # Import the required modules
 
-# Python standard library
-import logging
+# Third-party Modules
+# -------------------
+from termcolor import (
+    colored,
+)  # Termcolor is used to add color to terminal text, enhancing the readability of console outputs.
 
-# Third-party modules
-from termcolor import colored
-
-# discord.py library
-from discord.ext.commands import Bot
+# discord.py Library
+# ------------------
+from discord.ext.commands import (
+    Bot,
+)  # Importing the Bot class from discord.ext.commands to type hint the bot object.
 
 # Helpers
-from helpers.logs import RICKLOG
+# -------
+from helpers.logs import (
+    RICKLOG,
+)  # Importing the main logger from the helpers.logs module to log RickBot-specific events.
 
 # Functions
+# ---------
 
 
 def rickbot_start_msg(bot: Bot) -> None:
     """
     Print a message to the console when the bot is ready.
+
+    This function is called when RickBot is fully initialized and ready to start interacting with Discord.
+    It prints a stylized message to the console, logging information about the bot, including the number
+    of guilds, users, commands, and cogs it has loaded.
+
+    Args:
+        bot (Bot): The instance of RickBot that has just started.
+
+    Returns:
+        None
     """
-    print(START_SUCCESS_RICKBOT_ART)
+    print(
+        START_SUCCESS_RICKBOT_ART
+    )  # Print the ASCII art for RickBot's startup message.
+
+    # Log the bot's login details with colored output for emphasis.
     RICKLOG.info(f'Logged in as {colored(bot.user.name, "light_cyan", attrs=["bold", "underline"])} with ID {colored(bot.user.id, "light_cyan", attrs=["bold", "underline"])}')  # type: ignore
-    # Log extra information from the bot
+
+    # Log extra information about the bot's connections and loaded components.
     RICKLOG.info(
         f'Connected to {colored(len(bot.guilds), "light_cyan", attrs=["bold", "underline"])} guilds.'
     )
@@ -47,7 +70,10 @@ def rickbot_start_msg(bot: Bot) -> None:
 
 
 # Constants
+# ---------
 
+# This constant contains the ASCII art that is printed to the console when RickBot starts.
+# The art is a stylized version of RickBot's name, created using text with colored attributes.
 START_SUCCESS_RICKBOT_ART = (
     str(
         """
@@ -61,11 +87,11 @@ START_SUCCESS_RICKBOT_ART = (
             colored("//   ) )", "cyan", attrs=["bold"]),
             colored("//___/ /  ( )  ___     //___", "magenta", attrs=["bold"]),
             colored("//___/ /   ___    __  ___", "cyan", attrs=["bold"]),
-            colored("/ ___ (   / / //   ) ) //\ \\", "magenta", attrs=["bold"]),  # type: ignore
+            colored("/ ___ (   / / //   ) ) //\\ \\", "magenta", attrs=["bold"]),
             colored("/ __  (   //   ) )  / /", "cyan", attrs=["bold"]),
-            colored("//   | |  / / //       //  \ \\", "magenta", attrs=["bold"]),  # type: ignore
+            colored("//   | |  / / //       //  \\ \\", "magenta", attrs=["bold"]),
             colored("//    ) ) //   / /  / /", "cyan", attrs=["bold"]),
-            colored("//    | | / / ((____   //    \ \\", "magenta", attrs=["bold"]),  # type: ignore
+            colored("//    | | / / ((____   //    \\ \\", "magenta", attrs=["bold"]),
             colored("//____/ / ((___/ /  / /", "cyan", attrs=["bold"]),
         )
     )

@@ -1,35 +1,52 @@
 """
-(c) 2024 Zachariah Michael Lagden (All Rights Reserved)
-You may not use, copy, distribute, modify, or sell this code without the express permission of the author.
+(c) 2024 Lagden Development (All Rights Reserved)
+Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
+See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
 This cog provides utility commands for bot developers, such as evaluating code, executing commands, and testing errors.
 These commands are restricted to bot developers only for security purposes.
 """
 
-# Python standard library
-import os
-import subprocess
+# Python Standard Library
+# -----------------------
+import os  # os is used for interacting with the operating system, particularly to execute system commands and manage processes.
+import subprocess  # subprocess is used for running system commands and capturing their output.
 
-# Third-party libraries
-from discord.ext import commands
-from discord import app_commands
-import discord
+# Third Party Libraries
+# ---------------------
+from discord.ext import (
+    commands,
+)  # commands is used for creating bot commands and cogs within the Discord bot framework.
+from discord import (
+    app_commands,
+)  # app_commands is used for defining and managing slash commands in Discord.
+import discord  # discord is the main library used for interacting with the Discord API.
 
-# Helper functions
-from helpers.colors import MAIN_EMBED_COLOR, ERROR_EMBED_COLOR
-from helpers.errors import handle_error
+# Internal Modules
+# ----------------
+from helpers.colors import (
+    MAIN_EMBED_COLOR,
+    ERROR_EMBED_COLOR,
+)  # MAIN_EMBED_COLOR and ERROR_EMBED_COLOR are color codes used in embeds to maintain consistency in the bot's UI.
+from helpers.errors import (
+    handle_error,
+)  # handle_error is a custom function used to manage errors within commands, providing a standardized response.
 
 # Config
-from config import CONFIG
+# ------
+from config import (
+    CONFIG,
+)  # CONFIG is a configuration object used to access settings and constants across the bot.
 
 
+# Cog
 class RickBot_BotUtilsSlashCommands(commands.Cog):
     """
     This cog contains utility commands intended for bot developers, allowing them to evaluate Python code,
     execute system commands, and test error handling.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         """
         Initializes the cog with the bot instance.
 
@@ -57,7 +74,9 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         """
         return interaction.user.id == int(CONFIG["MAIN"]["dev"])
 
-    async def _send_embed(self, interaction, title, description, color):
+    async def _send_embed(
+        self, interaction: discord.Interaction, title: str, description: str, color: int
+    ) -> None:
         """
         Helper function to send formatted Discord embeds.
 
@@ -74,7 +93,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         name="eval", description="Evaluate Python code. Restricted to bot developers."
     )
     @app_commands.check(botownercheck)
-    async def eval(self, interaction: discord.Interaction, *, code: str):
+    async def eval(self, interaction: discord.Interaction, *, code: str) -> None:
         """
         Evaluates the provided Python code and returns the result.
 
@@ -95,7 +114,9 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         )
 
     @eval.error
-    async def eval_error(self, interaction: discord.Interaction, error):
+    async def eval_error(
+        self, interaction: discord.Interaction, error: commands.CommandError
+    ) -> None:
         """
         Handles errors for the eval command.
 
@@ -119,7 +140,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         name="exec", description="Execute Python code. Restricted to bot developers."
     )
     @app_commands.check(botownercheck)
-    async def exec(self, interaction: discord.Interaction, *, code: str):
+    async def exec(self, interaction: discord.Interaction, *, code: str) -> None:
         """
         Executes the provided Python code.
 
@@ -141,7 +162,9 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         )
 
     @exec.error
-    async def exec_error(self, interaction: discord.Interaction, error):
+    async def exec_error(
+        self, interaction: discord.Interaction, error: commands.CommandError
+    ) -> None:
         """
         Handles errors for the exec command.
 
@@ -165,7 +188,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         name="cmd", description="Run a system command. Restricted to bot developers."
     )
     @app_commands.check(botownercheck)
-    async def cmd(self, interaction: discord.Interaction, *, cmd: str):
+    async def cmd(self, interaction: discord.Interaction, *, cmd: str) -> None:
         """
         Runs the specified system command and returns the output.
 
@@ -186,7 +209,9 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         )
 
     @cmd.error
-    async def cmd_error(self, interaction: discord.Interaction, error):
+    async def cmd_error(
+        self, interaction: discord.Interaction, error: commands.CommandError
+    ) -> None:
         """
         Handles errors for the cmd command.
 
@@ -211,7 +236,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         description="Test error handling. Restricted to bot developers.",
     )
     @app_commands.check(botownercheck)
-    async def testerror(self, interaction: discord.Interaction):
+    async def testerror(self, interaction: discord.Interaction) -> None:
         """
         Raises a test error to verify error handling.
 
@@ -223,7 +248,9 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         raise Exception("Test error raised.")
 
     @testerror.error
-    async def testerror_error(self, interaction: discord.Interaction, error):
+    async def testerror_error(
+        self, interaction: discord.Interaction, error: commands.CommandError
+    ) -> None:
         """
         Handles errors for the testerror command.
 
@@ -247,12 +274,12 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         name="restart", description="Restart the bot. Restricted to bot developers."
     )
     @commands.check(botownercheck)
-    async def restart(self, interaction: discord.Interaction):
+    async def restart(self, interaction: discord.Interaction) -> None:
         """
         Restarts the bot.
 
         Args:
-            ctx (commands.Context): The context of the command.
+            interaction (discord.Interaction): The interaction that triggered the command.
         """
 
         if not CONFIG["advanced"]["linux_service_name"]:
@@ -268,7 +295,7 @@ class RickBot_BotUtilsSlashCommands(commands.Cog):
         )
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     """
     Sets up the cog by adding it to the bot.
 

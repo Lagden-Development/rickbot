@@ -1,30 +1,50 @@
 """
-(c) 2024 Zachariah Michael Lagden (All Rights Reserved)
-You may not use, copy, distribute, modify, or sell this code without the express permission of the author.
+(c) 2024 Lagden Development (All Rights Reserved)
+Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
+See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
-This cog provides commands to get information about the bot, this is a part of the RickBot default cog set.
+This cog provides commands to get information about the bot, which is a part of the RickBot default cog set.
 """
 
-# Python standard library
-from datetime import datetime
+# Python Standard Library
+# -----------------------
+from datetime import (
+    datetime,
+)  # Used for parsing and formatting date and time information
 
-# Third-party libraries
-from discord_timestamps import format_timestamp, TimestampType
-from discord.ext import commands
-from discord import app_commands
-import discord
-import requests
+# Third Party Libraries
+# ---------------------
+from discord_timestamps import (
+    format_timestamp,
+    TimestampType,
+)  # Helps format timestamps for Discord messages
+from discord.ext import commands  # Used for defining Discord bot commands and cogs
+from discord import app_commands  # Supports slash commands in Discord bots
+import discord  # Core library for interacting with Discord's API
+import requests  # Handles HTTP requests, used here for interacting with the GitHub API
 
-# Helper functions
-from helpers.colors import MAIN_EMBED_COLOR, ERROR_EMBED_COLOR
+# Internal Modules
+# ----------------
+from helpers.colors import (
+    MAIN_EMBED_COLOR,
+    ERROR_EMBED_COLOR,
+)  # Predefined color constants for Discord embeds
 
 # Config
-from config import CONFIG
+# ------
+from config import CONFIG  # Imports the bot's configuration settings
 
 
 # Custom Exceptions
 class InvalidGitHubURL(Exception):
-    def __init__(self, message="Invalid GitHub URL"):
+    """
+    Exception raised when an invalid GitHub URL is encountered.
+
+    Attributes:
+    message (str): The error message explaining the issue.
+    """
+
+    def __init__(self, message: str = "Invalid GitHub URL"):
         self.message = message
         super().__init__(self.message)
 
@@ -39,6 +59,9 @@ def convert_repo_url_to_api(url: str) -> str:
 
     Returns:
     str: The corresponding GitHub API URL for commits.
+
+    Raises:
+    ValueError: If the provided URL is invalid.
     """
     # Split the URL by slashes
     parts = url.rstrip("/").split("/")
@@ -58,7 +81,16 @@ def convert_repo_url_to_api(url: str) -> str:
 
 # Cog
 class RickBot_BotInfoSlashCommands(commands.Cog):
-    def __init__(self, bot):
+    """
+    Cog for RickBot that provides slash commands to retrieve bot information.
+
+    Attributes:
+    bot (commands.Bot): The instance of the bot.
+    GITHUB_REPO (str): The GitHub repository URL configured for the bot.
+    GITHUB_API (str): The GitHub API URL derived from the repository URL.
+    """
+
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
         self.GITHUB_REPO = CONFIG["REPO"]["url"]
@@ -68,7 +100,9 @@ class RickBot_BotInfoSlashCommands(commands.Cog):
         else:
             self.GITHUB_API = None
 
-    async def _send_embed(self, interaction, title, description, color):
+    async def _send_embed(
+        self, interaction: discord.Interaction, title: str, description: str, color: int
+    ):
         """Helper to send formatted Discord embeds."""
         embed = discord.Embed(title=title, description=description, color=color)
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -81,7 +115,7 @@ class RickBot_BotInfoSlashCommands(commands.Cog):
         Check GitHub for the latest commits, provides the last 5 along with other relevant information.
         """
 
-        if self.GITHUB_API is None:
+        if self.GITHUB_API in [None, ""]:
             await self._send_embed(
                 interaction,
                 "Sorry!",
@@ -183,4 +217,10 @@ class RickBot_BotInfoSlashCommands(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
+    """
+    Setup function to add this cog to the bot.
+
+    Args:
+    bot (commands.Bot): The instance of the bot.
+    """
     await bot.add_cog(RickBot_BotInfoSlashCommands(bot))
