@@ -10,6 +10,9 @@ This is a helper for handling all discord.py related errors.
 
 # Python Standard Library
 # ------------------------
+from typing import (
+    Union,
+)  # Used for type hinting, specifically for the error handling function.
 from datetime import (
     datetime,
 )  # Used for timestamping error logs and embeds with the current date and time.
@@ -33,18 +36,33 @@ from helpers.logs import (
 )  # The main logger for RickBot, used to log error details.
 
 
-async def handle_error(ctx: commands.Context, error: discord.DiscordException) -> None:
+async def handle_error(
+    ctx: Union[commands.Context, discord.Interaction], error: discord.DiscordException
+) -> None:
     """
     Handles errors that occur within the bot by sending an appropriate response to the user
     and logging the error if necessary.
 
     Args:
-        ctx (commands.Context): The context in which the error occurred.
+        ctx (commands.Context or discord.Interaction): The context / interaction in which the error occurred.
         error (discord.DiscordException): The error that occurred.
 
     Returns:
         None
     """
+
+    async def send_embed(embed: discord.Embed) -> None:
+        """
+        Helper function to send an embed depending on the context type.
+        """
+        if isinstance(ctx, commands.Context):
+            await ctx.reply(embed=embed, mention_author=False)
+        elif isinstance(ctx, discord.Interaction):
+            if not ctx.response.is_done():
+                await ctx.response.send_message(embed=embed, ephemeral=True)
+            else:
+                await ctx.followup.send(embed=embed, ephemeral=True)
+
     # Check for specific command-related errors and handle them accordingly
     if isinstance(error, commands.CommandNotFound):
         embed = discord.Embed(
@@ -52,7 +70,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description="Command not found.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     elif isinstance(error, commands.MissingRequiredArgument):
         embed = discord.Embed(
@@ -60,7 +78,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description="Missing required argument.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     elif isinstance(error, commands.BadArgument):
         embed = discord.Embed(
@@ -68,7 +86,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description="Bad argument.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     elif isinstance(error, commands.MissingPermissions):
         embed = discord.Embed(
@@ -76,7 +94,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description="You do not have the required permissions to run this command.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     elif isinstance(error, commands.BotMissingPermissions):
         embed = discord.Embed(
@@ -84,7 +102,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description="The bot does not have the required permissions to run this command.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     elif isinstance(error, commands.CommandOnCooldown):
         embed = discord.Embed(
@@ -92,7 +110,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description=f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     elif isinstance(error, commands.CheckFailure):
         embed = discord.Embed(
@@ -100,7 +118,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description="You do not have the required roles to run this command.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     elif isinstance(error, OverflowError):
         embed = discord.Embed(
@@ -108,7 +126,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             description="The number you entered is too large.",
             color=ERROR_EMBED_COLOR,
         )
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
 
     else:
         # Handle unexpected errors by logging and informing the user
@@ -150,7 +168,7 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
         )
 
         # Capture the original error's traceback for detailed logging
-        original_error = error.original
+        original_error = error.original if hasattr(error, "original") else error
         traceback_error = traceback.format_exception(
             type(original_error), original_error, original_error.__traceback__
         )
@@ -164,12 +182,18 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             )
             f.write(f"Error: {error}\n")
             f.write(f"Error ID: {error_id}\n")
-            f.write(f"Command: {ctx.command}\n")
-            f.write(f"Author: {ctx.author}\n")
-            f.write(f"Message: {ctx.message.content}\n")
-            f.write(f"Guild: {ctx.guild}\n")
-            f.write(f"Channel: {ctx.channel}\n")
             f.write(f"Time: {datetime.now()}\n")
+            if isinstance(ctx, commands.Context):
+                f.write(f"Command: {ctx.command}\n")
+                f.write(f"Author: {ctx.author}\n")
+                f.write(f"Message: {ctx.message.content}\n")
+                f.write(f"Guild: {ctx.guild}\n")
+                f.write(f"Channel: {ctx.channel}\n")
+            elif isinstance(ctx, discord.Interaction):
+                f.write(f"Command: {ctx.command.name if ctx.command else 'N/A'}\n")
+                f.write(f"User: {ctx.user}\n")
+                f.write(f"Guild: {ctx.guild}\n")
+                f.write(f"Channel: {ctx.channel}\n")
             f.write(
                 "\n\n----------------------------------------------------\nTraceback\n"
                 "----------------------------------------------------\n\n\n"
@@ -177,6 +201,6 @@ async def handle_error(ctx: commands.Context, error: discord.DiscordException) -
             f.write("".join(traceback_error))
 
         # Inform the user of the error and log it
-        await ctx.reply(embed=embed, mention_author=False)
+        await send_embed(embed)
         RICKLOG_MAIN.error(f"An error occurred while running the command: {error}")
         RICKLOG_MAIN.error(f"Error log created at {error_file}")
