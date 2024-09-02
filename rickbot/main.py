@@ -89,9 +89,6 @@ class RickContext(commands.Context):
     Custom context class for the bot, used to override or extend the default context behavior.
     """
 
-    def __init__(self, **attrs):
-        super().__init__(db=bot_db, **attrs)
-
 
 class RickBot(commands.Bot):
     """

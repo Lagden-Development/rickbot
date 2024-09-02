@@ -59,5 +59,3 @@ if not os.path.exists("custom_config.ini"):
 # Load the custom configuration from "custom_config.ini" into the CUSTOM_CONFIG parser.
 # This allows the script to merge or override the main configuration with user-provided settings.
 CUSTOM_CONFIG.read("custom_config.ini")
-
-print("PREFIX: `" + CONFIG["BOT"]["prefix"] + "`")
