@@ -1,3 +1,5 @@
+# !!! Please note that this documentation is yet to be updated for RickBot 1.2.1 !!!
+
 # Rickbot - Advanced discord.py Framework
 
 Rickbot is an advanced framework for creating complex (or simple) Discord bots quickly and efficiently using discord.py.
