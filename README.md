@@ -1,4 +1,4 @@
-# !!! Please note that this documentation is yet to be updated for RickBot 1.2.1 !!!
+# !!! Please note that this documentation is yet to be updated for RickBot 1.2.0 !!!
 
 # Rickbot - Advanced discord.py Framework
 
