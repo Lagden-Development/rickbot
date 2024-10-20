@@ -3,386 +3,330 @@
 Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
 See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
-This is the main application file for RickBot.
+This is the main application file for RickBot, a Discord bot built using discord.py.
+It contains the core functionality for bot initialization, command handling, and event management.
 """
 
-# Python Standard Library Imports
-# -------------------------------
-from datetime import datetime  # Used for logging timestamps and bot status updates.
-import asyncio  # Essential for managing asynchronous operations, which are critical for bot functionality.
-import logging  # Provides logging capabilities to track events and debug issues.
-import glob  # Used to find file paths matching a specified pattern, useful for loading cogs dynamically.
+from datetime import datetime
+import logging
+import glob
+import os
+from typing import Union, List, Optional
 
-# Third-party Libraries
-# ---------------------
-from discord.ext import (
-    commands,
-)  # Imports the commands extension for creating and managing bot commands.
-from termcolor import (
-    colored,
-)  # Used to add color to the console output, enhancing readability.
-import discord  # Core library for interacting with the Discord API.
+from pymongo.database import Database
+from discord.ext import commands
+from termcolor import colored
+import discord
 
-# Internal Modules
-# ------------
 from helpers.logs import (
-    setup_discord_logging,  # Function to set up logging specifically for Discord-related events.
-    RICKLOG,  # Main logger for general bot-related logging.
-    RICKLOG_MAIN,  # Logger for logging the main bot events.
-    RICKLOG_DISCORD,  # Logger for Discord-specific events.
-    RICKLOG_WEBHOOK,  # Logger for webhook-related events.
+    setup_discord_logging,
+    RICKLOG,
+    RICKLOG_MAIN,
+    RICKLOG_DISCORD,
 )
-from helpers.rickbot import (
-    rickbot_start_msg,
-)  # Function to print the bot start message.
-from helpers.errors import (
-    handle_error,
-)  # Function to handle errors in a standardized way.
-from db import bot_db  # Database connection for the bot.
+from helpers.rickbot import rickbot_start_msg
+from helpers.errors import handle_error
+from db import bot_db
+from config import CONFIG
 
-# Configuration
-# ------------------
-from config import (
-    CONFIG,
-)  # Configuration settings.
+COMMAND_ERRORS_TO_IGNORE = (commands.CommandNotFound,)
 
 
-# Configurations (Not usually changed, so not in the config file)
-# ---------------------------------------------------------------
-COMMAND_ERRORS_TO_IGNORE = (
-    commands.CommandNotFound,
-)  # A tuple of command errors that can be safely ignored.
-
-
-# Custom Exceptions
-# -----------------
 class WebhookFailedError(Exception):
     """
-    Raised when a webhook fails to send a message.
+    Custom exception raised when a webhook fails to send a message after multiple attempts.
+
+    This exception is used to signal that all attempts to send a message via webhook have failed,
+    allowing for appropriate error handling and logging.
     """
 
-    pass  # This exception is used to signal a failure in sending a webhook message.
 
-
-# Functions
-# ---------
-
-
-def get_prefix(bot, message):
+def get_prefix(bot: commands.Bot, message: discord.Message) -> Union[List[str], str]:
     """
-    Function to determine the command prefix for the bot.
+    Determine the command prefix for the bot based on the message context.
+
+    This function returns either a mention of the bot or the configured prefix.
+    It allows for flexible prefix handling, supporting both mentions and custom prefixes.
 
     Args:
-        bot: The instance of the bot.
-        message: The message object which triggered the command.
+        bot (commands.Bot): The bot instance.
+        message (discord.Message): The message that triggered the prefix check.
 
     Returns:
-        Callable: A function that returns either the mentioned prefix or the prefix defined in the configuration.
+        Union[List[str], str]: A list containing the bot mention and custom prefix, or just the custom prefix.
     """
     return commands.when_mentioned_or(CONFIG["BOT"]["prefix"])(bot, message)
 
 
-# Classes
-# -------
 class RickContext(commands.Context):
     """
-    Custom context class for the bot, used to override or extend the default context behavior.
+    Custom context class for RickBot.
+
+    This class extends the default Context class from discord.py, allowing for
+    additional custom functionality or attributes specific to RickBot's needs.
+    It can be used to add custom methods or properties that are accessible in all command contexts.
     """
 
 
 class RickBot(commands.Bot):
     """
     Custom bot class that encapsulates the main functionality and behavior of RickBot.
+
+    This class extends discord.py's Bot class, implementing custom initialization,
+    event handling, and utility methods specific to RickBot's requirements.
     """
 
-    def __init__(self):
+    def __init__(self: "RickBot") -> None:
+        """
+        Initialize the RickBot instance.
+
+        Sets up the bot with custom configurations including command prefix,
+        intents, and allowed mentions. It also initializes logging and loads
+        the bot's configuration.
+        """
+        intents: discord.Intents = discord.Intents.all()
         super().__init__(
-            command_prefix=get_prefix,  # Sets the prefix used to invoke commands.
-            case_insensitive=True,  # Commands are case-insensitive, making them easier to use.
-            strip_after_prefix=True,  # Strips whitespace after the prefix, ensuring clean command parsing.
-            allowed_mentions=discord.AllowedMentions(
-                everyone=False, roles=False
-            ),  # Prevents mass mentions.
-            intents=discord.Intents.all(),  # Sets the bot's intents, enabling access to all necessary events.
+            command_prefix=get_prefix,
+            case_insensitive=True,
+            strip_after_prefix=True,
+            allowed_mentions=discord.AllowedMentions.all(),
+            intents=intents,
+        )
+        self.setup_logging()
+        self.load_config()
+        self.db: Database = bot_db
+
+    def setup_logging(self: "RickBot") -> None:
+        """
+        Set up the logging configuration for the bot.
+
+        Configures logging levels and handlers for different parts of the bot,
+        ensuring appropriate logging for debugging and monitoring.
+        """
+        setup_discord_logging(logging.DEBUG)
+
+    def load_config(self: "RickBot") -> None:
+        """
+        Load and apply the bot's configuration settings.
+
+        Reads the configuration file and sets appropriate logging levels
+        based on whether the bot is running in development or production mode.
+        """
+        RICKLOG.setLevel(
+            logging.DEBUG if CONFIG["MAIN"]["mode"] == "dev" else logging.INFO
         )
 
-        self.setup_logging()  # Initialize logging setup.
-        self.load_config()  # Load configuration settings.
+    async def setup_hook(self: "RickBot") -> None:
+        """
+        Run after the bot has connected but before it has logged in.
 
-    def setup_logging(self):
+        This method is used to perform any asynchronous setup operations,
+        such as loading cogs, before the bot becomes fully operational.
         """
-        Sets up the logging configuration for the bot.
-        """
-        setup_discord_logging(
-            logging.DEBUG
-        )  # Calls a helper function to configure Discord-specific logging.
+        await self.load_cogs()
 
-    def load_config(self):
+    async def load_cogs(self: "RickBot") -> None:
         """
-        Loads and applies the bot's configuration settings.
-        Adjusts logging levels based on the current mode (development or production).
-        """
-        if CONFIG["MAIN"]["mode"] == "dev":
-            RICKLOG.setLevel(
-                logging.DEBUG
-            )  # Enables debug logging in development mode.
-        else:
-            RICKLOG.setLevel(
-                logging.INFO
-            )  # Uses standard logging levels in production.
+        Load all cogs (extensions) from the 'cogs' directory.
 
-    async def setup_hook(self):
-        """
-        Runs after the bot has connected but before it has logged in.
-        Used here to load all the cogs.
-        """
-        await self.load_cogs()  # Calls a method to dynamically load all bot cogs.
-
-    async def load_cogs(self):
-        """
-        Loads all cogs (extensions) from the 'cogs' directory.
+        Iterates through the cogs directory, loading each Python file as a cog.
+        This method allows for modular bot functionality through cogs.
         """
         for cog_folder in glob.glob("cogs/*"):
-            cogs_loaded_from_this_folder = 0
-            if not cog_folder.startswith("_"):
-                for filename in glob.glob(f"{cog_folder}/*.py"):
-                    if not filename.startswith("_"):
-                        cog_name = f"{filename[:-3].replace('/', '.')}"  # Convert file path to module path.
-                        await self.load_extension(
-                            cog_name
-                        )  # Load the cog as an extension.
-                        cogs_loaded_from_this_folder += 1
-                        RICKLOG_MAIN.debug(
-                            f"Loaded cog: {cog_name}"
-                        )  # Log the cog loading.
+            if cog_folder.startswith("_"):
+                continue
+            cogs_loaded: int = 0
+            for filename in glob.glob(f"{cog_folder}/*.py"):
+                if filename.startswith("_"):
+                    continue
+                cog_name: str = f"{filename[:-3].replace('/', '.')}"
+                await self.load_extension(cog_name)
+                cogs_loaded += 1
+                RICKLOG_MAIN.debug(f"Loaded cog: {cog_name}")
+            RICKLOG_MAIN.info(f"Loaded cog folder: {cog_folder} ({cogs_loaded} cogs)")
 
-            RICKLOG_MAIN.info(
-                f"Loaded cog folder: {cog_folder} ({cogs_loaded_from_this_folder} cogs)"
-            )
-
-    async def get_context(self, message, *, cls=None):
+    async def get_context(
+        self: "RickBot", message: discord.Message, *, cls: Optional[type] = None
+    ) -> RickContext:
         """
-        Overrides the default context method to use RickContext.
+        Override the default context method to use RickContext.
+
+        This method ensures that all command invocations use the custom RickContext,
+        allowing for bot-specific context handling and features.
 
         Args:
-            message: The message that triggered the context creation.
-            cls: The class to use for context creation (defaults to RickContext).
+            self (RickBot): The bot instance.
+            message (discord.Message): The message that triggered the context creation.
+            cls (Optional[type]): The class to use for context creation. Defaults to None.
 
         Returns:
-            RickContext: The context object created for the message.
+            RickContext: The custom context object for the given message.
         """
         return await super().get_context(message, cls=RickContext)
 
-    async def on_ready(self):
+    async def on_ready(self: "RickBot") -> None:
         """
-        Called when the bot is ready and fully connected to Discord.
-        Logs the ready state and sets the bot's status.
+        Event handler called when the bot is ready and fully connected to Discord.
+
+        This method logs the bot's successful startup, sets the bot's status,
+        displays the start message, and syncs slash commands with Discord.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         RICKLOG_MAIN.info(
             f"RickBot started at {colored(current_time, 'light_cyan', attrs=['bold', 'underline'])}"
         )
         RICKLOG_DISCORD.info("RickBot's Connection to Discord initialized.")
 
-        await self.set_status()  # Set the bot's status according to the configuration.
-        rickbot_start_msg(self)  # Display the start message.
-        print()  # Print an empty line for better console readability.
+        await self.set_status()
+        rickbot_start_msg(self)
+        print()
 
         RICKLOG_DISCORD.info("Syncing commands...")
-        await self.tree.sync()  # Sync commands with Discord.
+        await self.tree.sync()
         RICKLOG_DISCORD.info("Commands synced.")
 
-    async def set_status(self):
+    async def set_status(self: "RickBot") -> None:
         """
         Update the bot's status based on the configuration file.
+
+        Sets the bot's activity status on Discord according to the settings
+        specified in the configuration file, supporting various activity types.
         """
+        status_type: str = CONFIG["BOT"]["status_type"]
+        message: str = CONFIG["BOT"]["status_text"]
 
-        status_type = CONFIG["BOT"]["status_type"]
-        message = CONFIG["BOT"]["status_text"]
-
+        activity: Optional[Union[discord.Game, discord.Activity, discord.Streaming]] = (
+            None
+        )
         if status_type == "playing":
-            await self.change_presence(activity=discord.Game(name=message))
-
-        elif status_type == "watching":
-            await self.change_presence(
-                activity=discord.Activity(
-                    type=discord.ActivityType.watching, name=message
-                )
+            activity = discord.Game(name=message)
+        elif status_type in ("watching", "listening"):
+            activity_type: discord.ActivityType = getattr(
+                discord.ActivityType, status_type
             )
-
-        elif status_type == "listening":
-            await self.change_presence(
-                activity=discord.Activity(
-                    type=discord.ActivityType.listening, name=message
-                )
-            )
-
+            activity = discord.Activity(type=activity_type, name=message)
         elif status_type == "streaming":
-            url = CONFIG["BOT"]["status_url"]
-            await self.change_presence(
-                activity=discord.Streaming(name=message, url=url)
-            )
+            url: str = CONFIG["BOT"]["status_url"]
+            activity = discord.Streaming(name=message, url=url)
 
-    async def on_message(self, message):
+        if activity:
+            await self.change_presence(activity=activity)
+
+    async def on_message(self: "RickBot", message: discord.Message) -> None:
         """
-        Handles incoming messages and processes commands.
+        Event handler for processing incoming messages.
+
+        This method handles bot mentions and processes commands. It ignores messages
+        from bots and webhooks to prevent potential loops or unwanted interactions.
 
         Args:
-            message: The message object representing the received message.
+            message (discord.Message): The message received by the bot.
         """
-        # Ignore messages from the bot itself, other bots, DMs, or webhooks.
-        if message.author == self.user or message.author.bot or message.webhook_id:
+        if message.author.bot or message.webhook_id:
             return
 
-        # Check if the message mentions the bot and respond with a help message.
-        if message.content.startswith(
-            f"<@!{self.user.id}>"
-        ) or message.content.startswith(f"<@{self.user.id}>"):
+        if self.user and (
+            message.content.startswith(f"<@!{self.user.id}>")
+            or message.content.startswith(f"<@{self.user.id}>")
+        ):
             await message.reply(
                 f"Hey there, {message.author.mention}! Use `{CONFIG['BOT']['prefix']}help` to see what I can do.",
                 mention_author=False,
             )
             return
 
-        await self.process_commands(message)  # Process commands in the message.
+        await self.process_commands(message)
 
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(
+        self: "RickBot", ctx: commands.Context, error: discord.DiscordException
+    ) -> None:
         """
-        Global error handler for commands.
+        Global error handler for command-related errors.
+
+        This method catches and processes errors that occur during command execution.
+        It ignores certain types of errors and delegates others to a custom error handler.
 
         Args:
-            ctx: The context in which the error occurred.
-            error: The error that occurred.
+            ctx (commands.Context): The context in which the error occurred.
+            error (discord.DiscordException): The error that was raised.
         """
-        # If the command has its own error handler or the error should be ignored, do nothing.
         if hasattr(ctx.command, "on_error") or isinstance(
             error, COMMAND_ERRORS_TO_IGNORE
         ):
             return
+        await handle_error(ctx, error)
 
-        await handle_error(ctx, error)  # Handle the error using a custom handler.
-
-    async def start_bot(self):
+    async def start_bot(self: "RickBot") -> None:
         """
-        Starts the bot and handles graceful shutdown.
+        Start the bot and handle graceful shutdown.
 
-        This method encapsulates the bot's startup process and ensures that
-        the bot shuts down gracefully when requested.
+        This method initiates the bot's connection to Discord and ensures
+        proper shutdown procedures are followed when the bot is stopped.
         """
         try:
             RICKLOG_MAIN.info("Starting RickBot...")
-            await self.start(
-                CONFIG["BOT"]["token"]
-            )  # Start the bot using the token from the config.
+            token = os.getenv("TOKEN")
+            if not token:
+                raise ValueError(
+                    "No token provided. Please set the TOKEN environment variable, or use the auto-setup script to generate one, to run the setup, delete the .env file."
+                )
+            await self.start(token)
         finally:
-            RICKLOG_MAIN.info(
-                "RickBot has shut down gracefully."
-            )  # Log that the bot has shut down.
+            RICKLOG_MAIN.info("Discord connection closed.")
 
-    async def shutdown(self, signal):
+    async def shutdown(self: "RickBot", signal: str) -> None:
         """
-        Gracefully shuts down the bot upon receiving a termination signal.
+        Gracefully shut down the bot upon receiving a termination signal.
+
+        This method ensures that the bot performs necessary cleanup operations
+        and closes its connection to Discord when a shutdown signal is received.
 
         Args:
-            signal: The signal that triggered the shutdown.
+            signal: The termination signal received.
         """
         RICKLOG_MAIN.info(
-            f"Received exit signal {signal.name} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}..."
+            f"Received exit signal {signal} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}..."
         )
         RICKLOG_DISCORD.info("Closing Discord connection...")
-        await self.close()  # Close the connection to Discord.
+        await self.close()
         RICKLOG_DISCORD.info("Discord connection closed.")
 
-    async def on_connect(self):
+    async def on_connect(self: "RickBot") -> None:
         """
-        Called when the bot successfully connects to Discord.
-        Logs the connection event.
+        Event handler called when the bot successfully connects to Discord.
+
+        This method logs the connection event and the session ID for debugging purposes.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         RICKLOG_DISCORD.info(f"RickBot connected to Discord at {current_time}.")
-        RICKLOG_DISCORD.info(f"Session ID: {self.ws.session_id}")  # Log the session ID.
+        RICKLOG_DISCORD.info(f"Session ID: {self.ws.session_id}")
 
-    async def on_disconnect(self):
+    async def on_disconnect(self: "RickBot") -> None:
         """
-        Called when the bot disconnects from Discord.
-        Logs the disconnection event and attempts to reconnect.
+        Event handler called when the bot disconnects from Discord.
+
+        This method logs the disconnection event and indicates that a reconnection attempt will be made.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         RICKLOG_DISCORD.warning(f"RickBot disconnected from Discord at {current_time}.")
-        RICKLOG_DISCORD.info("Attempting to reconnect...")
+        # Check if the bot was disconnected on purpose
+        if self.is_closed():
+            RICKLOG_DISCORD.info(
+                "RickBot connection to discord was intentionally closed."
+            )
+        else:
+            RICKLOG_DISCORD.info(
+                "RickBot was disconnected from discord unexpectedly, attempting to reconnect..."
+            )
 
-    async def on_resumed(self):
+    async def on_resumed(self: "RickBot") -> None:
         """
-        Called when the bot successfully resumes a connection to Discord after a disconnect.
-        Logs the resume event.
+        Event handler called when the bot successfully resumes a connection to Discord after a disconnect.
+
+        This method logs the successful resumption of the connection and the new session ID.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         RICKLOG_DISCORD.info(
             f"RickBot resumed connection to Discord at {current_time}."
         )
-        RICKLOG_DISCORD.info(
-            f"Resumed Session ID: {self.ws.session_id}"
-        )  # Log the resumed session ID.
-
-    async def grab_channel_webhook(
-        self, channel: discord.TextChannel
-    ) -> discord.Webhook:
-        """
-        Grabs or creates a webhook for the specified channel.
-
-        Args:
-            channel (discord.TextChannel): The channel for which the webhook is being retrieved or created.
-
-        Returns:
-            discord.Webhook: The webhook object for the specified channel.
-        """
-        # Grab all webhooks in the channel
-        webhooks = await channel.webhooks()
-
-        # Find all webhooks created by the bot
-        bot_webhooks = [webhook for webhook in webhooks if webhook.user == self.user]
-
-        # There should only be one webhook created by the bot
-        # If there are more than one, delete the extras
-        if len(bot_webhooks) > 1:
-            for webhook in bot_webhooks[1:]:
-                await webhook.delete()
-
-        # If there are no webhooks created by the bot, create a new one
-        if not bot_webhooks:
-            webhook = await channel.create_webhook(
-                name=self.user.display_name,
-                reason=f"Creating new webhook for {self.user.display_name}",
-            )
-        else:
-            webhook = bot_webhooks[0]
-
-        return webhook
-
-    async def send_to_channel(
-        self,
-        channel: discord.TextChannel,
-        **kwargs,
-    ):
-        """
-        Sends a message to a channel using a webhook.
-
-        Args:
-            channel (discord.TextChannel): The channel where the message will be sent.
-            **kwargs: Additional keyword arguments to be passed to the webhook's send method.
-        """
-        # Grab the webhook for the channel
-        webhook = await self.grab_channel_webhook(channel)
-
-        # Try to send the message
-        # Allow 3 attempts
-
-        for attempt in range(3):
-            try:
-                await webhook.send(**kwargs)
-                return
-            except discord.HTTPException as e:
-                RICKLOG_WEBHOOK.error(
-                    f"Failed to send webhook message to channel {channel} on attempt ({str(attempt)}): {e}"
-                )
-                await asyncio.sleep(1)  # Wait for a second before retrying.
+        RICKLOG_DISCORD.info(f"Resumed Session ID: {self.ws.session_id}")

@@ -3,37 +3,97 @@
 Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
 See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
-This is a helper for handling all discord.py related errors.
+This module provides enhanced error handling functionality for discord.py related errors.
+It includes a comprehensive error handling system that logs errors, notifies users,
+and provides detailed information for debugging purposes, with improved user interaction.
 """
 
-# Import the required modules
+from typing import Union, Callable, Dict, Type, Optional
+from datetime import datetime
+import random
+import string
+import traceback
+from pathlib import Path
 
-# Python Standard Library
-# ------------------------
-from typing import (
-    Union,
-)  # Used for type hinting, specifically for the error handling function.
-from datetime import (
-    datetime,
-)  # Used for timestamping error logs and embeds with the current date and time.
-import os  # Interacts with the operating system, here to check and create directories.
-import random  # Used to generate random values, specifically for creating unique error IDs.
-import string  # Provides a set of characters used in the creation of random error IDs.
-import traceback  # Captures and formats stack traces, useful for detailed error logs.
+import discord
+from discord.ext import commands
 
-# Third Party Libraries
-# ---------------------
-import discord  # The primary library for interacting with the Discord API.
-from discord.ext import (
-    commands,
-)  # Provides the Command extension for building Discord bots.
+from helpers.colors import ERROR_EMBED_COLOR
+from helpers.logs import RICKLOG_MAIN
 
-# Internal Modules
-# ----------------
-from helpers.colors import ERROR_EMBED_COLOR  # Custom color code for error embeds.
-from helpers.logs import (
-    RICKLOG_MAIN,
-)  # The main logger for RickBot, used to log error details.
+# Directory for storing error logs
+ERROR_DIR = Path("errors")
+
+
+class CustomError(Exception):
+    """
+    Base class for custom errors in the RickBot system.
+
+    Attributes:
+        message (str): The error message.
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
+
+
+class InputValidationError(CustomError):
+    """
+    Raised when input validation fails.
+
+    This error is used when user input does not meet the required criteria.
+    """
+
+    pass
+
+
+class DatabaseError(CustomError):
+    """
+    Raised when a database operation fails.
+
+    This error is used for any issues related to database interactions.
+    """
+
+    pass
+
+
+class APIError(CustomError):
+    """
+    Raised when an API request fails.
+
+    This error is used for issues related to external API calls.
+    """
+
+    pass
+
+
+class ErrorDetailsView(discord.ui.View):
+    """
+    A view that provides a button to show detailed error information.
+
+    Attributes:
+        error_details (str): The detailed error message to be displayed.
+    """
+
+    def __init__(self, error_details: str):
+        super().__init__()
+        self.error_details = error_details
+
+    @discord.ui.button(label="Show Details", style=discord.ButtonStyle.primary)
+    async def show_details(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        """
+        Callback for the "Show Details" button.
+
+        Args:
+            interaction (discord.Interaction): The interaction that triggered the button.
+            button (discord.ui.Button): The button that was pressed.
+        """
+        await interaction.response.send_message(
+            f"Error Details:\n```{self.error_details}```", ephemeral=True
+        )
 
 
 async def handle_error(
@@ -43,164 +103,136 @@ async def handle_error(
     Handles errors that occur within the bot by sending an appropriate response to the user
     and logging the error if necessary.
 
+    This function categorizes errors, provides user-friendly messages, logs unexpected errors,
+    and notifies the developer with detailed error information.
+
     Args:
-        ctx (commands.Context or discord.Interaction): The context / interaction in which the error occurred.
+        ctx (Union[commands.Context, discord.Interaction]): The context or interaction in which the error occurred.
         error (discord.DiscordException): The error that occurred.
 
     Returns:
         None
+
+    Raises:
+        No exceptions are raised by this function.
     """
 
-    async def send_embed(embed: discord.Embed) -> None:
+    async def send_embed(
+        embed: discord.Embed, view: Optional[discord.ui.View] = None
+    ) -> None:
         """
         Helper function to send an embed depending on the context type.
+
+        Args:
+            embed (discord.Embed): The embed to send.
+            view (Optional[discord.ui.View]): The view to attach to the message.
+
+        Returns:
+            None
         """
         if isinstance(ctx, commands.Context):
-            await ctx.reply(embed=embed, mention_author=False)
+            await ctx.reply(
+                embed=embed, view=view or discord.ui.View(), mention_author=False
+            )
         elif isinstance(ctx, discord.Interaction):
             if not ctx.response.is_done():
-                await ctx.response.send_message(embed=embed, ephemeral=True)
-            else:
-                await ctx.followup.send(embed=embed, ephemeral=True)
-
-    # Check for specific command-related errors and handle them accordingly
-    if isinstance(error, commands.CommandNotFound):
-        embed = discord.Embed(
-            title="Error",
-            description="Command not found.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    elif isinstance(error, commands.MissingRequiredArgument):
-        embed = discord.Embed(
-            title="Error",
-            description="Missing required argument.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    elif isinstance(error, commands.BadArgument):
-        embed = discord.Embed(
-            title="Error",
-            description="Bad argument.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    elif isinstance(error, commands.MissingPermissions):
-        embed = discord.Embed(
-            title="Error",
-            description="You do not have the required permissions to run this command.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    elif isinstance(error, commands.BotMissingPermissions):
-        embed = discord.Embed(
-            title="Error",
-            description="The bot does not have the required permissions to run this command.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    elif isinstance(error, commands.CommandOnCooldown):
-        embed = discord.Embed(
-            title="Error",
-            description=f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    elif isinstance(error, commands.CheckFailure):
-        embed = discord.Embed(
-            title="Error",
-            description="You do not have the required roles to run this command.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    elif isinstance(error, OverflowError):
-        embed = discord.Embed(
-            title="Error",
-            description="The number you entered is too large.",
-            color=ERROR_EMBED_COLOR,
-        )
-        await send_embed(embed)
-
-    else:
-        # Handle unexpected errors by logging and informing the user
-        # Generate a random error ID to track this specific error instance
-        error_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
-
-        embed = discord.Embed(
-            title="An Unexpected Error has occurred",
-            description=(
-                "You should feel special, this doesn't often happen.\n\n"
-                "The developer has been notified, and a fix should be out soon.\n"
-                "If no fix has been released after a while, please contact the "
-                "developer and provide the below Error ID."
-            ),
-            timestamp=datetime.now(),
-            color=ERROR_EMBED_COLOR,
-        )
-
-        embed.add_field(name="Error", value=f"```{error}```", inline=False)
-        embed.add_field(name="Error ID", value=f"```{error_id}```", inline=False)
-        embed.set_footer(text="RickBot Error Logging")
-
-        # Ensure the errors directory exists, create it if it doesn't
-        if not os.path.exists("errors"):
-            RICKLOG_MAIN.warning(
-                "The errors directory does not exist; creating it now."
-            )
-            try:
-                os.makedirs("errors")
-            except Exception as e:
-                RICKLOG_MAIN.error(
-                    f"An error occurred while creating the errors directory: {e}\nNo error log will be created."
+                await ctx.response.send_message(
+                    embed=embed, view=view or discord.ui.View(), ephemeral=True
                 )
-                return
+            else:
+                await ctx.followup.send(
+                    embed=embed, view=view or discord.ui.View(), ephemeral=True
+                )
 
-        # Log the error details to a file in the errors directory
-        error_file = (
-            f"errors/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}-{error_id}.txt"
+    # Dictionary mapping error types to their corresponding user-friendly messages
+    error_handlers: Dict[Type[Exception], Union[str, Callable]] = {
+        commands.CommandNotFound: "The command you entered was not found. Please check the spelling and try again.",
+        commands.MissingRequiredArgument: lambda e: f"Missing required argument: {e.param.name}. Please provide all necessary information.",
+        commands.BadArgument: "Invalid argument provided. Please check the command usage and try again.",
+        commands.MissingPermissions: lambda e: f"You lack the following required permissions: {', '.join(e.missing_permissions)}.",
+        commands.BotMissingPermissions: lambda e: f"The bot lacks the following required permissions: {', '.join(e.missing_permissions)}.",
+        commands.CommandOnCooldown: lambda e: f"This command is on cooldown. Please try again in {e.retry_after:.2f} seconds.",
+        commands.CheckFailure: "You do not meet the requirements to use this command. Please check your roles and permissions.",
+        OverflowError: "The number you entered is too large for the system to handle. Please use a smaller value.",
+        InputValidationError: lambda e: f"Input validation failed: {e.message}",
+        DatabaseError: lambda e: f"A database error occurred: {e.message}",
+        APIError: lambda e: f"An API error occurred: {e.message}",
+    }
+
+    # Generate a unique error ID
+    error_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+    # Check for known error types and handle them
+    for error_type, message in error_handlers.items():
+        if isinstance(error, error_type):
+            error_message = message if isinstance(message, str) else message(error)
+            break
+    else:
+        # Handle unexpected errors
+        error_message = (
+            "An unexpected error has occurred. Our team has been notified and is working on a solution.\n\n"
+            "If this issue persists, please contact our support team and provide the Error ID below."
         )
 
-        # Capture the original error's traceback for detailed logging
-        original_error = error.original if hasattr(error, "original") else error
-        traceback_error = traceback.format_exception(
-            type(original_error), original_error, original_error.__traceback__
+    embed = discord.Embed(
+        title="Error Occurred" if error_message else "Unexpected Error",
+        description=error_message,
+        color=ERROR_EMBED_COLOR,
+        timestamp=datetime.now() if error_message else None,
+    )
+    embed.set_footer(text="For more information, click the button below.")
+    embed.add_field(name="Error ID", value=f"```{error_id}```", inline=False)
+
+    error_details = (
+        f"An unexpected error occurred (ID: {error_id}).\nError: {str(error)}"
+        if not error_message
+        else error_message
+    )
+    view = ErrorDetailsView(error_details)
+
+    await send_embed(embed, view)
+
+    # Log the error details
+    ERROR_DIR.mkdir(exist_ok=True)
+    error_file = (
+        ERROR_DIR / f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}-{error_id}.txt"
+    )
+
+    original_error = getattr(error, "original", error)
+    traceback_error = traceback.format_exception(
+        type(original_error), original_error, original_error.__traceback__
+    )
+
+    with error_file.open("w") as f:
+        f.write(
+            "Error Report for RickBot\n"
+            "========================\n\n"
+            "An error occurred during the execution of RickBot.\n"
+            "This report contains detailed information about the error for debugging purposes.\n\n"
         )
-
-        with open(error_file, "w+") as f:
+        f.write(f"Error: {error}\n")
+        f.write(f"Error ID: {error_id}\n")
+        f.write(f"Timestamp: {datetime.now()}\n")
+        f.write(f"User-friendly message: {error_message}\n\n")
+        if isinstance(ctx, commands.Context):
+            f.write(f"Command: {ctx.command}\n")
+            f.write(f"Author: {ctx.author} (ID: {ctx.author.id})\n")
+            f.write(f"Message Content: {ctx.message.content}\n")
             f.write(
-                "Hello! An error occurred during the running of RickBot.\n"
-                "This is most likely a serious error, so please investigate it.\n"
-                "If you find this error has occurred due to an issue with the original code, "
-                "please contact the developer.\nOtherwise, you're on your own. Good luck!\n\n"
+                f"Guild: {ctx.guild} (ID: {ctx.guild.id if ctx.guild else 'N/A'})\n"
             )
-            f.write(f"Error: {error}\n")
-            f.write(f"Error ID: {error_id}\n")
-            f.write(f"Time: {datetime.now()}\n")
-            if isinstance(ctx, commands.Context):
-                f.write(f"Command: {ctx.command}\n")
-                f.write(f"Author: {ctx.author}\n")
-                f.write(f"Message: {ctx.message.content}\n")
-                f.write(f"Guild: {ctx.guild}\n")
-                f.write(f"Channel: {ctx.channel}\n")
-            elif isinstance(ctx, discord.Interaction):
-                f.write(f"Command: {ctx.command.name if ctx.command else 'N/A'}\n")
-                f.write(f"User: {ctx.user}\n")
-                f.write(f"Guild: {ctx.guild}\n")
-                f.write(f"Channel: {ctx.channel}\n")
+            f.write(f"Channel: {ctx.channel} (ID: {ctx.channel.id})\n")
+        elif isinstance(ctx, discord.Interaction):
+            f.write(f"Command: {ctx.command.name if ctx.command else 'N/A'}\n")
+            f.write(f"User: {ctx.user} (ID: {ctx.user.id})\n")
             f.write(
-                "\n\n----------------------------------------------------\nTraceback\n"
-                "----------------------------------------------------\n\n\n"
+                f"Guild: {ctx.guild} (ID: {ctx.guild.id if ctx.guild else 'N/A'})\n"
             )
-            f.write("".join(traceback_error))
+            f.write(
+                f"Channel: {ctx.channel} (ID: {ctx.channel.id if ctx.channel else 'N/A'})\n"
+            )
+        f.write("\n\nTraceback\n" "=========\n\n")
+        f.write("".join(traceback_error))
 
-        # Inform the user of the error and log it
-        await send_embed(embed)
-        RICKLOG_MAIN.error(f"An error occurred while running the command: {error}")
-        RICKLOG_MAIN.error(f"Error log created at {error_file}")
+    RICKLOG_MAIN.error(f"Error occurred (ID: {error_id}): {error}")
+    RICKLOG_MAIN.error(f"Detailed error log created at {error_file}")

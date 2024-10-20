@@ -3,196 +3,191 @@
 Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
 See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
-This cog provides utility commands for RickBot, allowing the bot owner to execute, evaluate, and manage code and commands directly through Discord. 
-It also includes error handling and a test error command.
+RickBot Bot Utilities Chat Commands Cog
+
+This module provides a set of utility commands for the bot owner, allowing direct interaction
+with the bot's runtime environment through Discord. It includes functionality for code evaluation,
+execution, shell command running, and error testing.
 """
 
-# Python Standard Library
-# ------------------------
-import subprocess  # Used for running shell commands from within Python code
+import subprocess
+import asyncio
+from typing import Callable, NoReturn
 
-# Third Party Libraries
-# ---------------------
-from discord.ext import commands  # Used for defining Discord bot commands and cogs
-import discord  # Core library for interacting with Discord's API
+from discord.ext import commands
+import discord
 
-# Internal Modules
-# ----------------
-from helpers.colors import (
-    MAIN_EMBED_COLOR,
-    ERROR_EMBED_COLOR,
-)  # Predefined color constants for Discord embeds
-from helpers.errors import handle_error  # Custom error handling function
-
-# Config
-# ------
-from config import CONFIG  # Imports the bot's configuration settings
+from helpers.colors import MAIN_EMBED_COLOR, ERROR_EMBED_COLOR
+from helpers.errors import handle_error
+from config import CONFIG
 
 
-# Helper Functions
 def botownercheck(ctx: commands.Context) -> bool:
     """
     Check if the user is the bot owner.
 
     Args:
-    ctx (commands.Context): The command context.
+        ctx (commands.Context): The command context containing information about the invoker.
 
     Returns:
-    bool: True if the user is the bot owner, False otherwise.
+        bool: True if the user is the bot owner, False otherwise.
     """
     return ctx.author.id == int(CONFIG["MAIN"]["dev"])
 
 
-# Cog
-class RickBot_BotUtilsCommands(commands.Cog):
+class RickBot_BotUtils_ChatCommands(commands.Cog):
     """
-    Cog for RickBot that provides utility commands for the bot owner.
+    A cog that provides utility commands for the bot owner.
 
-    This includes commands for evaluating code, executing code, running shell commands, and a command for testing error handling.
+    This cog includes commands for evaluating Python code, executing Python code,
+    running shell commands, and testing error handling. All commands are restricted
+    to the bot owner for security reasons.
 
     Attributes:
-    bot (commands.Bot): The instance of the bot.
+        bot (commands.Bot): The instance of the bot this cog is attached to.
     """
 
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
-    @commands.command()
-    @commands.check(botownercheck)
-    async def eval(self, ctx: commands.Context, *, code: str):
+    def __init__(self, bot: commands.Bot) -> None:
         """
-        Evaluate a string of Python code.
+        Initialize the RickBot_BotUtilsCommands cog.
 
         Args:
-        ctx (commands.Context): The command context.
-        code (str): The Python code to evaluate.
+            bot (commands.Bot): The bot instance to which this cog is being added.
+        """
+        self.bot = bot
+
+    async def _execute_code(self, code: str, exec_func: Callable) -> str:
+        """
+        Execute the provided code using the specified execution function.
+
+        This method runs the code in a separate thread to prevent blocking the event loop.
+
+        Args:
+            code (str): The code to execute.
+            exec_func (Callable): The function to use for execution (e.g., eval or exec).
+
+        Returns:
+            str: The output of the code execution or an error message.
         """
         try:
-            str_output = str(eval(code))
+            output = await asyncio.to_thread(exec_func, code)
+            return str(output) if output is not None else "Executed successfully."
         except Exception as e:
-            str_output = str(e)
+            return f"Error: {str(e)}"
 
+    async def _send_embed(
+        self, ctx: commands.Context, title: str, description: str
+    ) -> None:
+        """
+        Send a formatted Discord embed as a response to a command.
+
+        Args:
+            ctx (commands.Context): The context of the command invocation.
+            title (str): The title of the embed.
+            description (str): The description/content of the embed.
+        """
         embed = discord.Embed(
-            title="Eval", description=f"```py\n{str_output}```", color=MAIN_EMBED_COLOR
+            title=title, description=description, color=MAIN_EMBED_COLOR
         )
         await ctx.reply(embed=embed, mention_author=False)
 
-    @eval.error
-    async def eval_error(self, ctx: commands.Context, error: commands.CommandError):
+    @commands.command(name="eval")
+    @commands.check(botownercheck)
+    async def _eval(self, ctx: commands.Context, *, code: str) -> NoReturn:
         """
-        Error handler for the eval command.
+        Evaluate a string of Python code and return the result.
+
+        This command allows the bot owner to execute Python expressions and view the output.
 
         Args:
-        ctx (commands.Context): The command context.
-        error (commands.CommandError): The exception raised during command execution.
+            ctx (commands.Context): The context of the command invocation.
+            code (str): The Python code to evaluate.
         """
-        if isinstance(error, commands.CheckFailure):
-            embed = discord.Embed(
-                title="Error",
-                description="Only the bot developer can run this command as it is dangerous.",
-                color=ERROR_EMBED_COLOR,
-            )
-            await ctx.reply(embed=embed, mention_author=False)
-        else:
-            await handle_error(ctx, error)
+        str_output = await self._execute_code(code, eval)
+        await self._send_embed(ctx, "Eval", f"```py\n{str_output}```")
 
-    @commands.command()
+    @commands.command(name="exec")
     @commands.check(botownercheck)
-    async def exec(self, ctx: commands.Context, *, code: str):
+    async def _exec(self, ctx: commands.Context, *, code: str) -> NoReturn:
         """
         Execute a string of Python code.
 
-        Args:
-        ctx (commands.Context): The command context.
-        code (str): The Python code to execute.
-        """
-        try:
-            exec(code)
-            str_output = "Executed successfully."
-        except Exception as e:
-            str_output = str(e)
-
-        embed = discord.Embed(
-            title="Exec", description=f"```py\n{str_output}```", color=MAIN_EMBED_COLOR
-        )
-        await ctx.reply(embed=embed, mention_author=False)
-
-    @exec.error
-    async def exec_error(self, ctx: commands.Context, error: commands.CommandError):
-        """
-        Error handler for the exec command.
+        This command allows the bot owner to execute Python statements and view the output.
 
         Args:
-        ctx (commands.Context): The command context.
-        error (commands.CommandError): The exception raised during command execution.
+            ctx (commands.Context): The context of the command invocation.
+            code (str): The Python code to execute.
         """
-        if isinstance(error, commands.CheckFailure):
-            embed = discord.Embed(
-                title="Error",
-                description="Only the bot developer can run this command as it is dangerous.",
-                color=ERROR_EMBED_COLOR,
-            )
-            await ctx.reply(embed=embed, mention_author=False)
-        else:
-            await handle_error(ctx, error)
+        str_output = await self._execute_code(code, exec)
+        await self._send_embed(ctx, "Exec", f"```py\n{str_output}```")
 
-    @commands.command()
+    @commands.command(name="cmd")
     @commands.check(botownercheck)
-    async def cmd(self, ctx: commands.Context, *, cmd: str):
+    async def _cmd(self, ctx: commands.Context, *, cmd: str) -> NoReturn:
         """
-        Run a shell command.
+        Run a shell command and return the output.
+
+        This command allows the bot owner to execute system commands and view the output.
 
         Args:
-        ctx (commands.Context): The command context.
-        cmd (str): The shell command to run.
+            ctx (commands.Context): The context of the command invocation.
+            cmd (str): The shell command to execute.
         """
         try:
-            str_output = subprocess.check_output(cmd, shell=True, text=True)
+            str_output = await asyncio.to_thread(
+                subprocess.check_output,
+                cmd,
+                shell=True,
+                text=True,
+                stderr=subprocess.STDOUT,
+            )
         except subprocess.CalledProcessError as e:
-            str_output = f"Error executing command: {e}"
+            str_output = f"Error executing command: {e.output}"
+        await self._send_embed(ctx, "Command", f"```{str_output}```")
 
-        embed = discord.Embed(
-            title="Command", description=f"```{str_output}```", color=MAIN_EMBED_COLOR
-        )
-        await ctx.reply(embed=embed, mention_author=False)
-
-    @cmd.error
-    async def cmd_error(self, ctx: commands.Context, error: commands.CommandError):
-        """
-        Error handler for the cmd command.
-
-        Args:
-        ctx (commands.Context): The command context.
-        error (commands.CommandError): The exception raised during command execution.
-        """
-        if isinstance(error, commands.CheckFailure):
-            embed = discord.Embed(
-                title="Error",
-                description="Only the bot developer can run this command as it is dangerous.",
-                color=ERROR_EMBED_COLOR,
-            )
-            await ctx.reply(embed=embed, mention_author=False)
-        else:
-            await handle_error(ctx, error)
-
-    @commands.command()
+    @commands.command(name="testerror")
     @commands.check(botownercheck)
-    async def testerror(self, ctx: commands.Context):
+    async def _testerror(self, ctx: commands.Context) -> NoReturn:
         """
         Trigger an error for testing purposes.
 
+        This command is used to test the error handling capabilities of the bot.
+
         Args:
-        ctx (commands.Context): The command context.
+            ctx (commands.Context): The context of the command invocation.
         """
-        await ctx.message.add_reaction("👌")
         raise Exception("Test error.")
 
+    async def cog_command_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ) -> NoReturn:
+        """
+        Global error handler for all commands in this cog.
 
-async def setup(bot: commands.Bot):
+        This method catches any errors raised during command execution and handles them appropriately.
+
+        Args:
+            ctx (commands.Context): The context of the command invocation.
+            error (commands.CommandError): The error that was raised during command execution.
+        """
+        if isinstance(error, commands.CheckFailure):
+            embed = discord.Embed(
+                title="Error",
+                description="Only the bot developer can run this command.",
+                color=ERROR_EMBED_COLOR,
+            )
+            await ctx.reply(embed=embed, mention_author=False)
+        else:
+            await handle_error(ctx, error)
+
+
+async def setup(bot: commands.Bot) -> NoReturn:
     """
     Setup function to add this cog to the bot.
 
+    This function is called by the bot when loading the cog.
+
     Args:
-    bot (commands.Bot): The instance of the bot.
+        bot (commands.Bot): The bot instance to which this cog is being added.
     """
-    await bot.add_cog(RickBot_BotUtilsCommands(bot))
+    await bot.add_cog(RickBot_BotUtils_ChatCommands(bot))

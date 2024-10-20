@@ -8,6 +8,10 @@ It sets up the connection to the database, provides access to various collection
 functions for obtaining the MongoDB client.
 """
 
+# Standard Modules
+# ----------------
+import os
+
 # Third Party Modules
 # -------------------
 from pymongo.mongo_client import (
@@ -21,12 +25,11 @@ from pymongo.server_api import (
 # ----------------
 from config import CONFIG
 
-
 # Initialize the MongoDB client
 # -----------------------------
 # Here we're creating a MongoClient instance using the URI specified in the CONFIG.
 # The ServerApi parameter is used to lock the API version to "1", ensuring compatibility and stability.
-client = MongoClient(CONFIG["DB"]["mongo_uri"], server_api=ServerApi("1"))
+client = MongoClient(os.getenv("MONGO_URI"), server_api=ServerApi("1"))
 
 # Database Access
 # ------------------------------

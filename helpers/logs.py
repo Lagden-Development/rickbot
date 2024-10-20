@@ -140,9 +140,6 @@ RICKLOG_DISCORD = logging.getLogger(
 RICKLOG_MAIN = logging.getLogger(
     "rickbot.main"
 )  # Sub-logger for main application logs.
-RICKLOG_WEBHOOK = logging.getLogger(
-    "rickbot.webhook"
-)  # Sub-logger for webhook-related logs.
 RICKLOG_BG = logging.getLogger("rickbot.bg")  # Sub-logger for background task logs.
 RICKLOG_HELPERS = logging.getLogger(
     "rickbot.helpers"
@@ -158,8 +155,6 @@ RICKLOG_DISCORD.addHandler(file_handler)
 RICKLOG_DISCORD.addHandler(console_handler)
 RICKLOG_MAIN.addHandler(file_handler)
 RICKLOG_MAIN.addHandler(console_handler)
-RICKLOG_WEBHOOK.addHandler(file_handler)
-RICKLOG_WEBHOOK.addHandler(console_handler)
 RICKLOG_BG.addHandler(file_handler)
 RICKLOG_BG.addHandler(console_handler)
 RICKLOG_HELPERS.addHandler(file_handler)
@@ -199,6 +194,5 @@ if __name__ == "__main__":
     RICKLOG_CMDS.debug("This is a debug message from the cmds sub-logger.")
     RICKLOG_DISCORD.info("This is an info message from the discord sub-logger.")
     RICKLOG_MAIN.warning("This is a warning message from the main sub-logger.")
-    RICKLOG_WEBHOOK.error("This is an error message from the webhook sub-logger.")
     RICKLOG_BG.critical("This is a critical message from the background sub-logger.")
     RICKLOG_HELPERS.info("This is an info message from the helpers sub-logger.")
