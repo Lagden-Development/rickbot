@@ -21,8 +21,10 @@ from discord.ext import commands
 from helpers.colors import ERROR_EMBED_COLOR
 from helpers.logs import RICKLOG_MAIN
 
+from config import CONFIG
+
 # Directory for storing error logs
-ERROR_DIR = Path("errors")
+ERROR_DIR = Path(CONFIG["MAIN"]["error_log_folder"])
 
 
 class CustomError(Exception):

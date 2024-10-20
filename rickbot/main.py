@@ -27,7 +27,7 @@ from helpers.logs import (
 from helpers.rickbot import rickbot_start_msg
 from helpers.errors import handle_error
 from db import bot_db
-from config import CONFIG
+from config import CONFIG, CUSTOM_CONFIG
 
 COMMAND_ERRORS_TO_IGNORE = (commands.CommandNotFound,)
 
@@ -95,6 +95,8 @@ class RickBot(commands.Bot):
         self.setup_logging()
         self.load_config()
         self.db: Database = bot_db
+        self.config = CONFIG
+        self.custom_config = CUSTOM_CONFIG
 
     def setup_logging(self: "RickBot") -> None:
         """
@@ -192,6 +194,16 @@ class RickBot(commands.Bot):
         Sets the bot's activity status on Discord according to the settings
         specified in the configuration file, supporting various activity types.
         """
+        status_switch: str = CONFIG["BOT"]["status"]
+        print(status_switch)
+        if status_switch == "off":
+            return
+        elif status_switch != "on":
+            RICKLOG_MAIN.warning(
+                f"Invalid status setting in config: {status_switch}. Defaulting to 'off'."
+            )
+            return
+
         status_type: str = CONFIG["BOT"]["status_type"]
         message: str = CONFIG["BOT"]["status_text"]
 
@@ -208,6 +220,11 @@ class RickBot(commands.Bot):
         elif status_type == "streaming":
             url: str = CONFIG["BOT"]["status_url"]
             activity = discord.Streaming(name=message, url=url)
+        else:
+            RICKLOG_MAIN.warning(
+                f"Invalid status type in config: {status_type}. Disabling status."
+            )
+            return
 
         if activity:
             await self.change_presence(activity=activity)
@@ -250,10 +267,20 @@ class RickBot(commands.Bot):
             ctx (commands.Context): The context in which the error occurred.
             error (discord.DiscordException): The error that was raised.
         """
-        if hasattr(ctx.command, "on_error") or isinstance(
-            error, COMMAND_ERRORS_TO_IGNORE
-        ):
+
+        # Check if the command has a custom error handler
+        if hasattr(ctx.command, "on_error"):
             return
+
+        # Check if the cog has a custom error handler
+        if ctx.cog and hasattr(ctx.cog, "cog_command_error"):
+            return
+
+        # Check if the error should be ignored
+        if isinstance(error, COMMAND_ERRORS_TO_IGNORE):
+            return
+
+        # Finally, handle the error
         await handle_error(ctx, error)
 
     async def start_bot(self: "RickBot") -> None:

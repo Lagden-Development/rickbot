@@ -160,7 +160,7 @@ class RickBot_BotUtils_ChatCommands(commands.Cog):
 
     async def cog_command_error(
         self, ctx: commands.Context, error: commands.CommandError
-    ) -> NoReturn:
+    ) -> None:
         """
         Global error handler for all commands in this cog.
 
