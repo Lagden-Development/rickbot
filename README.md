@@ -239,7 +239,7 @@ Contributions are welcome! Whether you're fixing bugs, adding features, or impro
 
 If you need help or have questions, we’re here to assist you. However, please keep the following in mind:
 
-- **RickBot Issues:** I provide support for any bugs, feature requests, or general questions related to RickBot.
+- **RickBot Issues:** We provide support for any bugs, feature requests, or general questions related to RickBot. Join our [Discord Server](https://discord.gg/zXumZ5jsBF) or get in contact via [Email](mailto:contact@lagden.dev).
 - **discord.py Issues:** For issues related specifically to discord.py, please refer to the [discord.py documentation](https://discordpy.readthedocs.io/en/stable/) or join the [discord.py support server](https://discord.gg/dpy).
 
 ### How to Get Support
