@@ -1,8 +1,8 @@
-# !!! Please note that this documentation is yet to be updated for RickBot 1.2.0 !!!
+# RickBot - Advanced Discord.py Framework
 
-# Rickbot - Advanced discord.py Framework
+**Note:** This documentation is yet to be updated for RickBot 1.2.0.
 
-Rickbot is an advanced framework for creating complex (or simple) Discord bots quickly and efficiently using discord.py.
+RickBot is an advanced framework designed for building complex (or simple) Discord bots quickly and efficiently using discord.py.
 
 ## Table of Contents
 
@@ -10,114 +10,126 @@ Rickbot is an advanced framework for creating complex (or simple) Discord bots q
 2. [Features](#features)
 3. [Installation](#installation)
    - [Prerequisites](#prerequisites)
-   - [Steps](#steps)
+   - [Installation Steps](#installation-steps)
 4. [Configuration](#configuration)
-   - [Config Files](#config-files)
+   - [Config Files Overview](#config-files-overview)
    - [Example `config.json`](#example-configjson)
 5. [Project Structure](#project-structure)
 6. [Usage](#usage)
 7. [Creating Custom Cogs](#creating-custom-cogs)
    - [Example Cog](#example-cog)
 8. [Database Integration](#database-integration)
-   - [Example Usage](#example-usage)
+   - [Example MongoDB Usage](#example-mongodb-usage)
 9. [Troubleshooting](#troubleshooting)
 10. [Contributing](#contributing)
-   - [Getting Started](#getting-started)
-   - [Making Changes](#making-changes)
-   - [Testing](#testing)
-   - [Submitting Changes](#submitting-changes)
-   - [Guidelines](#guidelines)
+
+- [Getting Started](#getting-started)
+- [Making Changes](#making-changes)
+- [Testing Your Changes](#testing-your-changes)
+- [Submitting Changes](#submitting-changes)
+- [Contribution Guidelines](#contribution-guidelines)
+
 11. [Support](#support)
-   - [How to Get Support](#how-to-get-support)
+
+- [How to Get Support](#how-to-get-support)
+
 12. [License](#license)
 
 ## Introduction
 
-Rickbot is designed to help you build scalable and maintainable Discord bots with ease. Utilizing the discord.py library, Rickbot offers a structured approach to bot development.
+RickBot is designed to help developers build scalable and maintainable Discord bots with ease. Using the discord.py library, RickBot provides a structured and modular approach to bot development, making it simple to extend functionality as your bot grows.
 
 ## Features
 
-- **Modular Design:** Easily add or remove features with cogs.
-- **Database Support:** Integrated with MongoDB for robust data handling.
-- **Configurable:** Extensive configuration options for flexibility.
-- **Extensible:** Create custom commands and events effortlessly.
+- **Modular Design:** Easily add or remove features through cogs.
+- **Database Integration:** MongoDB is supported for robust and flexible data storage.
+- **Highly Configurable:** Extensive options for fine-tuning bot behavior.
+- **Extensible:** Quickly add custom commands and events.
 
 ## Installation
 
 ### Prerequisites
 
+Ensure the following software is installed on your system:
+
 - **Python 3.10+**: [Download Python](https://www.python.org/downloads/)
-- **pip**: Python package installer (usually comes with Python)
+- **pip**: Python package installer (typically included with Python)
 - **git**: [Download Git](https://git-scm.com/)
-- **MongoDB**: [Get started with MongoDB](https://www.mongodb.com/) | [Create a free MongoDB deployment](https://www.mongodb.com/atlas)
+- **MongoDB**: [MongoDB Setup Guide](https://www.mongodb.com/) | [Free MongoDB Deployment](https://www.mongodb.com/atlas)
 
-### Steps
+### Installation Steps
 
-1. Clone the repository:
+1. **Clone the Repository:**
+
    ```bash
    git clone https://github.com/zachlagden/rickbot
    ```
-2. Navigate to the project directory:
+
+2. **Navigate to the Project Directory:**
+
    ```bash
    cd rickbot
    ```
-3. Install the required packages:
+
+3. **Install Required Packages:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 ## Configuration
 
-### Config Files
+### Config Files Overview
 
-- `config.json`: Contains general bot settings.
-- `customconfig.json`: For additional custom settings.
+- `config.json`: Holds the core bot configuration.
+- `customconfig.json`: Optional file for additional custom settings.
 
-### Note
-- `config.py` is not a configuration file itself. It serves to ensure that the actual configuration files (`config.json`, `customconfig.json`) exist and are properly imported into the project.
+> **Note:** `config.py` is not a configuration file itself. It ensures that `config.json` and `customconfig.json` are properly loaded into the project.
 
 ### Example `config.json`
+
 ```json
 {
-    "mode": "dev",
-    "devs": [123456789],
-    "bot": {
-        "token": "BOT TOKEN",
-        "prefix": "!",
-        "status": {
-            "type": "playing",
-            "message": "a game",
-        },
-    },
-    "behaviour": {
-        "continue_to_load_cogs_after_failure": false,
-    },
-    "mongo": {
-        "uri": "mongodb uri",
-        "bot_specific_db": "bot",
-    },
+  "mode": "dev",
+  "devs": [123456789],
+  "bot": {
+    "token": "BOT TOKEN",
+    "prefix": "!",
+    "status": {
+      "type": "playing",
+      "message": "a game"
+    }
+  },
+  "behaviour": {
+    "continue_to_load_cogs_after_failure": false
+  },
+  "mongo": {
+    "uri": "mongodb uri",
+    "bot_specific_db": "bot"
+  }
 }
 ```
 
 ## Project Structure
 
-- `app.py`: The main entry point for the bot.
-- `cogs/`: Directory for cog modules.
-- `helpers/`: Utility functions and helpers.
-- `rickbot/`: Core framework files.
-- `config.json`: General configuration file.
-- `customconfig.json`: Custom settings.
+- **`app.py`**: Main entry point for running the bot.
+- **`cogs/`**: Directory for bot functionality modules (cogs).
+- **`helpers/`**: Utility functions and helper scripts.
+- **`rickbot/`**: Core framework files for RickBot.
+- **`config.json`**: Primary configuration file.
+- **`customconfig.json`**: Optional file for additional custom settings.
 
 ## Usage
 
-Start the bot with:
+To start the bot, run the following command:
+
 ```bash
 python app.py
 ```
 
 ## Creating Custom Cogs
 
-Cogs are modular extensions that add functionality to your bot. Create new cogs in the `cogs/<category>/` directory. Within the `cogs` folder, additional folders are used to separate categories of cogs. In RickBot, we aim to use one cog per command for optimal organization, with separate folders for different categories.
+Cogs are modular extensions used to add functionality to your bot. They should be placed in the `cogs/<category>/` directory, where additional folders separate cog categories. To maintain optimal organization, RickBot encourages using one cog per command.
 
 ### Example Cog
 
@@ -139,11 +151,10 @@ def setup(bot):
 
 ## Database Integration
 
-Rickbot uses MongoDB for data storage. Ensure your MongoDB URI is correctly set in `config.json`.
+RickBot integrates with MongoDB for data storage. Ensure your MongoDB URI is correctly set in the `config.json` file. The `db.py` file serves as a convenient base for managing database connections and collections, but feel free to customize it to meet your specific requirements.
 
-Rickbot uses `db.py` to predefine the accessed databases and collections from MongoDB. You can customize these definitions or manually manage your database interactions. The structure in `db.py` provides a convenient starting point, ensuring consistent database connections and collections usage across the bot. If you have specific requirements or prefer a different setup, feel free to modify `db.py` or implement your own database management methods to suit your needs.
+### Example MongoDB Usage
 
-### Example Usage
 ```python
 from pymongo import MongoClient
 from config import CONFIG
@@ -155,79 +166,84 @@ collection = db['example']
 
 ## Troubleshooting
 
-- **Installation Issues:** Ensure all prerequisites are installed and paths are correctly set.
-- **Bot Not Responding:** Check token validity and bot permissions.
-- **Database Errors:** Verify MongoDB URI and database status.
+- **Installation Issues:** Ensure all prerequisites are correctly installed, and verify your environment variables.
+- **Bot Not Responding:** Confirm that the bot token is valid and the bot has appropriate permissions.
+- **Database Errors:** Verify your MongoDB URI and ensure that MongoDB is running.
 
 ## Contributing
 
-I welcome contributions of all kinds to improve Rickbot. Whether you're fixing bugs, adding new features, or improving documentation, your efforts are highly appreciated. Follow these guidelines to contribute effectively.
+Contributions are welcome! Whether you're fixing bugs, adding features, or improving documentation, your contributions help improve RickBot.
 
 ### Getting Started
 
-1. **Fork the Repository**: Create a personal copy of the repository by clicking the "Fork" button.
-2. **Clone Your Fork**: Clone the repository to your local machine using:
+1. **Fork the Repository:** Click the "Fork" button on the repository page.
+2. **Clone Your Fork:** Clone the repository to your local machine:
+
    ```bash
    git clone https://github.com/Lagden-Development/rickbot.git
    ```
-3. **Create a Branch**: Always create a new branch for your changes:
+
+3. **Create a Branch:** Always create a new branch for your changes:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 ### Making Changes
 
-1. **Write Clear Commit Messages**: Each commit message should clearly describe what changes were made and why. Follow the convention:
-   ```text
-   [Component] Description of changes
-   ```
-   For example:
-   ```text
-   [Cog] Add new command for weather updates
-   ```
-2. **Code Style**: Follow the existing code style. Use consistent indentation and comments to explain complex logic.
-3. **Documentation**: Update the README and any relevant documentation to reflect your changes. Add docstrings to new functions and classes.
+1. **Commit Messages:** Write clear and concise commit messages. Use this format:
 
-### Testing
+   ```text
+   [Component] Brief description of changes
+   ```
 
-1. **Test Your Changes**: Ensure your changes work as expected. Run existing tests and add new ones if necessary.
-2. **Lint Your Code**: Use a linter to check for code style issues. For example:
+   Example:
+
+   ```text
+   [Cog] Added command to fetch weather updates
+   ```
+
+2. **Code Style:** Maintain the existing code style. Use consistent indentation and document complex logic with comments.
+3. **Documentation:** Update relevant documentation (including the README) to reflect your changes. Add docstrings where appropriate.
+
+### Testing Your Changes
+
+1. **Run Tests:** Test your changes to ensure they work as expected.
+2. **Lint Your Code:** Run a linter to check for code style issues:
+
    ```bash
    flake8 your_file.py
    ```
 
 ### Submitting Changes
 
-1. **Push to Your Fork**: Push your changes to your forked repository:
+1. **Push to Your Fork:**
+
    ```bash
    git push origin feature/your-feature-name
    ```
-2. **Create a Pull Request**: Navigate to the original repository and create a pull request from your forked repository. Provide a detailed description of your changes and the issue it resolves (if applicable).
 
-### Review Process
+2. **Create a Pull Request:** Open a pull request on the original repository with a detailed description of your changes and any issues it addresses.
 
-1. **Respond to Feedback**: Be prepared to make changes based on feedback from the project maintainers. Engage in the discussion to clarify any questions.
-2. **Continuous Improvement**: Keep your branch updated with the latest changes from the main repository to avoid merge conflicts.
+### Contribution Guidelines
 
-### Guidelines
-
-- **Bug Fixes**: Reference the issue number you are fixing in your commit messages and pull request description.
-- **New Features**: Provide a clear explanation of the feature and why it is beneficial.
-- **Documentation**: Ensure all new features and changes are documented. This includes updating code comments, docstrings, and the README.
+- **Bug Fixes:** Reference the issue number in your commit messages and pull request description.
+- **New Features:** Clearly explain the new feature and its value.
+- **Documentation:** Ensure all new features are documented appropriately.
 
 ## Support
 
-If you encounter issues or have questions about Rickbot, we are here to help! However, please note the following guidelines for support:
+If you need help or have questions, we’re here to assist you. However, please keep the following in mind:
 
-- **Rickbot Issues**: I provide support for any issues related to Rickbot and its functionality. This includes bugs, feature requests, and general questions about how to use and extend Rickbot.
-- **discord.py Issues**: I do not provide support for issues related to discord.py itself. For discord.py-specific problems, please refer to the [discord.py documentation](https://discordpy.readthedocs.io/en/stable/) or the [discord.py support server](https://discord.gg/dpy).
+- **RickBot Issues:** I provide support for any bugs, feature requests, or general questions related to RickBot.
+- **discord.py Issues:** For issues related specifically to discord.py, please refer to the [discord.py documentation](https://discordpy.readthedocs.io/en/stable/) or join the [discord.py support server](https://discord.gg/dpy).
 
 ### How to Get Support
 
-1. **Search Existing Issues**: Before creating a new issue, please check the [issue tracker](https://github.com/zachlagden/rickbot/issues) to see if your problem has already been reported or addressed.
-2. **Create a New Issue**: If you don't find a solution, create a new issue in the [issue tracker](https://github.com/zachlagden/rickbot/issues). Provide as much detail as possible, including steps to reproduce the problem and any error messages.
-3. **Pull Requests**: If you have a solution to an issue, feel free to submit a pull request. Please follow the contributing guidelines outlined in the [Contributing](#contributing) section.
+1. **Check Existing Issues:** Search the [issue tracker](https://github.com/zachlagden/rickbot/issues) for similar problems before posting a new issue.
+2. **Create a New Issue:** If no solution is found, create a new issue and provide as much detail as possible, including steps to reproduce and any error messages.
+3. **Submit a Pull Request:** If you have a solution for the issue, feel free to submit a pull request.
 
 ## License
 
-This project is licensed under the terms of the non-commercial open-source license. You can view the full license [here](https://github.com/Lagden-Development/.github/blob/main/LICENSE).
+This project is licensed under a non-commercial open-source license. View the full license [here](https://github.com/Lagden-Development/.github/blob/main/LICENSE).
