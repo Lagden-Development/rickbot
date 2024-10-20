@@ -1,6 +1,10 @@
+![GitHub Release](https://img.shields.io/github/v/release/Lagden-Development/rickbot)
+![GitHub branch check runs](https://img.shields.io/github/check-runs/Lagden-Development/rickbot/main)
+![Codacy Badge](https://app.codacy.com/project/badge/Grade/d20be7f7ddcf429bb59329b97cee6903)
+
 # RickBot - Advanced Discord.py Framework
 
-**Note:** This documentation is yet to be updated for RickBot 1.2.0.
+**Note:** This documentation is yet to be updated for RickBot 1.2.1.
 
 RickBot is an advanced framework designed for building complex (or simple) Discord bots quickly and efficiently using discord.py.
 
