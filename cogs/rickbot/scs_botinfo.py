@@ -1,3 +1,4 @@
+# cogs/rickbot/scs_botinfo.py
 """
 (c) 2024 Lagden Development (All Rights Reserved)
 Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
@@ -5,12 +6,12 @@ See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more inf
 
 RickBot Bot Info Slash Commands Cog
 
-This cog provides commands to retrieve information about the bot, which is part of the RickBot default cog set.
-It includes functionality to check for updates, ping the bot, and get general bot information.
+This cog provides slash commands to retrieve information about the bot, which is part 
+of the RickBot default cog set. It includes functionality to check for updates, 
+ping the bot, and get general bot information.
 """
 
-from typing import NoReturn
-
+from typing import Optional
 from discord.ext import commands
 from discord import app_commands, Interaction, Embed
 
@@ -22,6 +23,7 @@ from cogs.rickbot.helpers.github_updates import (
 from config import CONFIG
 
 
+@app_commands.guild_only()
 class RickBot_BotInfo_SlashCommands(commands.Cog):
     """
     A cog that provides slash commands for retrieving bot information.
@@ -43,14 +45,30 @@ class RickBot_BotInfo_SlashCommands(commands.Cog):
             bot (commands.Bot): The instance of the bot.
         """
         self.bot = bot
-        self.github_repo = CONFIG["REPO"]["url"]
+        self.github_repo = CONFIG["REPO"].get("url", "").strip()
         self.github_api = (
             convert_repo_url_to_api(self.github_repo) if self.github_repo else None
         )
 
+    async def create_error_embed(self, title: str, description: str) -> Embed:
+        """
+        Create a standardized error embed message.
+
+        Args:
+            title (str): The title for the error embed.
+            description (str): The description/message for the error embed.
+
+        Returns:
+            Embed: The formatted error embed.
+        """
+        embed = Embed(title=title, description=description, color=ERROR_EMBED_COLOR)
+        embed.set_footer(text="🛠️ RickBot - A project by lagden.dev")
+        return embed
+
     @app_commands.command(
         name="updates", description="Check GitHub for the latest commits."
     )
+    @app_commands.checks.cooldown(1, 30.0)
     async def updates(self, interaction: Interaction) -> None:
         """
         Check GitHub for the latest commits and provide information about recent updates.
@@ -61,24 +79,26 @@ class RickBot_BotInfo_SlashCommands(commands.Cog):
 
         Args:
             interaction (Interaction): The interaction that triggered this command.
-
-        Returns:
-            None
         """
-        if not self.github_repo:
-            embed = Embed(
-                title="Sorry!",
-                description="This command is disabled.",
-                color=ERROR_EMBED_COLOR,
-            )
-            embed.set_footer(text="🛠️ RickBot - A project by lagden.dev")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
+        try:
+            if not self.github_repo:
+                embed = await self.create_error_embed(
+                    "Sorry!", "The updates command is currently disabled."
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
 
-        embed = get_github_updates(self.github_repo)
-        await interaction.response.send_message(embed=embed)
+            embed = get_github_updates(self.github_repo)
+            await interaction.response.send_message(embed=embed)
+
+        except Exception as e:
+            error_embed = await self.create_error_embed(
+                "Error!", f"Failed to fetch updates: {str(e)}"
+            )
+            await interaction.response.send_message(embed=error_embed, ephemeral=True)
 
     @app_commands.command(name="ping", description="Check the bot's latency.")
+    @app_commands.checks.cooldown(1, 10.0)
     async def ping(self, interaction: Interaction) -> None:
         """
         Check and display the bot's current latency.
@@ -88,18 +108,26 @@ class RickBot_BotInfo_SlashCommands(commands.Cog):
 
         Args:
             interaction (Interaction): The interaction that triggered this command.
-
-        Returns:
-            None
         """
-        latency = round(self.bot.latency * 1000)
-        embed = Embed(
-            title="Pong!", description=f"Latency: {latency}ms", color=MAIN_EMBED_COLOR
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        try:
+            latency = round(self.bot.latency * 1000)
+            embed = Embed(
+                title="Pong!",
+                description=f"🏓 Latency: {latency}ms",
+                color=MAIN_EMBED_COLOR,
+            )
+            embed.set_footer(text="🛠️ RickBot - A project by lagden.dev")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        except Exception as e:
+            error_embed = await self.create_error_embed(
+                "Error!", f"Failed to check latency: {str(e)}"
+            )
+            await interaction.response.send_message(embed=error_embed, ephemeral=True)
 
     @app_commands.command(name="info", description="Get information about the bot.")
-    async def info(self, interaction: Interaction) -> NoReturn:
+    @app_commands.checks.cooldown(1, 30.0)
+    async def info(self, interaction: Interaction) -> None:
         """
         Provide general information about the bot.
 
@@ -108,27 +136,62 @@ class RickBot_BotInfo_SlashCommands(commands.Cog):
 
         Args:
             interaction (Interaction): The interaction that triggered this command.
-
-        Returns:
-            None
         """
-        embed = Embed(
-            title="RickBot Information",
-            description="RickBot is a versatile Discord bot developed by Lagden Development.",
-            color=MAIN_EMBED_COLOR,
-        )
-        embed.add_field(name="Version", value=CONFIG["VERSION"]["version"], inline=True)
-        embed.add_field(
-            name="Developer", value="<@" + CONFIG["MAIN"]["dev"] + ">", inline=True
-        )
-        embed.add_field(
-            name="GitHub", value=self.github_repo or "Not available", inline=False
-        )
-        embed.set_footer(text="🛠️ RickBot - A project by lagden.dev")
-        await interaction.response.send_message(embed=embed)
+        try:
+            embed = Embed(
+                title="RickBot Information",
+                description="RickBot is a versatile Discord bot developed by Lagden Development.",
+                color=MAIN_EMBED_COLOR,
+            )
+            embed.add_field(
+                name="Version",
+                value=CONFIG["VERSION"].get("version", "Unknown"),
+                inline=True,
+            )
+            embed.add_field(
+                name="Developer",
+                value=f"<@{CONFIG['MAIN'].get('dev', 'Unknown')}>",
+                inline=True,
+            )
+            embed.add_field(
+                name="GitHub", value=self.github_repo or "Not available", inline=False
+            )
+            embed.set_footer(text="🛠️ RickBot - A project by lagden.dev")
+            await interaction.response.send_message(embed=embed)
+
+        except Exception as e:
+            error_embed = await self.create_error_embed(
+                "Error!", f"Failed to fetch bot info: {str(e)}"
+            )
+            await interaction.response.send_message(embed=error_embed, ephemeral=True)
+
+    async def cog_app_command_error(
+        self, interaction: Interaction, error: app_commands.AppCommandError
+    ) -> None:
+        """
+        Handle errors that occur in slash commands.
+
+        Args:
+            interaction (Interaction): The interaction where the error occurred.
+            error (app_commands.AppCommandError): The error that occurred.
+        """
+        if isinstance(error, app_commands.CommandOnCooldown):
+            embed = await self.create_error_embed(
+                "Slow down!",
+                f"Please wait {error.retry_after:.1f}s before using this command again.",
+            )
+        else:
+            embed = await self.create_error_embed(
+                "Error!", "An unexpected error occurred. Please try again later."
+            )
+
+        try:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        except:
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
 
-async def setup(bot: commands.Bot) -> NoReturn:
+async def setup(bot: commands.Bot) -> None:
     """
     Set up the RickBot_BotInfo_SlashCommands cog.
 

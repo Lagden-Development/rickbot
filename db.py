@@ -20,10 +20,19 @@ from pymongo.mongo_client import (
 from pymongo.server_api import (
     ServerApi,
 )  # Allows locking the API version to ensure compatibility.
+from dotenv import (
+    load_dotenv,
+)  # Used to load environment variables from a .env file.
 
 # Internal Modules
 # ----------------
 from config import CONFIG
+
+# Load Environment Variables
+# --------------------------
+# Load the environment variables from the .env file.
+# This is done to ensure that sensitive information such as the MongoDB URI is not hardcoded in the codebase.
+load_dotenv(override=True)
 
 # Initialize the MongoDB client
 # -----------------------------

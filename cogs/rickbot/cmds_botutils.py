@@ -89,6 +89,7 @@ class RickBot_BotUtils_ChatCommands(commands.Cog):
         embed = discord.Embed(
             title=title, description=description, color=MAIN_EMBED_COLOR
         )
+        embed.set_footer(text="🛠️ RickBot - A project by lagden.dev")
         await ctx.reply(embed=embed, mention_author=False)
 
     @commands.command(name="eval")
