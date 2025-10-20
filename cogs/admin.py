@@ -122,8 +122,16 @@ class Admin(commands.Cog):
         await interaction.response.send_modal(modal)
 
         # Wait for modal submission
-        if await modal.wait():
-            return  # Timeout
+        timed_out = await modal.wait()
+        if timed_out:
+            # Modal timed out - user didn't submit
+            embed = discord.Embed(
+                title="⏱️ Kick Cancelled",
+                description="Action timed out - no reason provided.",
+                color=ERROR_EMBED_COLOR,
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
 
         reason = modal.submitted_reason
 
@@ -259,8 +267,16 @@ class Admin(commands.Cog):
         await interaction.response.send_modal(modal)
 
         # Wait for modal submission
-        if await modal.wait():
-            return  # Timeout
+        timed_out = await modal.wait()
+        if timed_out:
+            # Modal timed out - user didn't submit
+            embed = discord.Embed(
+                title="⏱️ Ban Cancelled",
+                description="Action timed out - no reason provided.",
+                color=ERROR_EMBED_COLOR,
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
 
         reason = modal.submitted_reason
         delete_days = modal.submitted_delete_days

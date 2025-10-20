@@ -5,6 +5,7 @@ Production-grade Discord bot with integrated database observability.
 """
 
 from typing import Optional
+import asyncio
 import discord
 from discord.ext import commands, tasks
 from motor.motor_asyncio import AsyncIOMotorClient
