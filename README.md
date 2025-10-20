@@ -1,10 +1,24 @@
-# RickBot 2.0
+<div align="center">
 
-> Production-grade Discord bot framework with database-first observability
+# 🤖 RickBot 2.0
+
+### Production-grade Discord bot framework with database-first observability
+
+[![GitHub Release](https://img.shields.io/github/v/release/Lagden-Development/rickbot)](https://github.com/Lagden-Development/rickbot/releases)
+[![GitHub branch check runs](https://img.shields.io/github/check-runs/Lagden-Development/rickbot/main)](https://github.com/Lagden-Development/rickbot/actions)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d20be7f7ddcf429bb59329b97cee6903)](https://app.codacy.com/gh/Lagden-Development/rickbot/dashboard)
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Discord.py](https://img.shields.io/badge/discord.py-2.0+-blue.svg)](https://github.com/Rapptz/discord.py)
+[![License](https://img.shields.io/github/license/Lagden-Development/rickbot)](https://unlicense.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/Lagden-Development/rickbot?style=social)](https://github.com/Lagden-Development/rickbot/stargazers)
+
+</div>
+
+---
 
 A modern, type-safe Discord bot built with discord.py, featuring comprehensive command logging, error tracking, and performance metrics powered by MongoDB.
 
-## Features
+## ✨ Features
 
 - **Slash Commands** - Modern Discord interactions with autocomplete and modals
 - **Database-First Observability** - Track every command, error, and metric
@@ -15,7 +29,7 @@ A modern, type-safe Discord bot built with discord.py, featuring comprehensive c
 - **Developer Tools** - Hot reloading, error viewer, metrics dashboard
 - **Extensible** - Easy-to-add cogs with example implementations
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -25,27 +39,30 @@ A modern, type-safe Discord bot built with discord.py, featuring comprehensive c
 
 ### Installation
 
-1. **Clone the repository**
+<details>
+<summary><b>Click to expand installation steps</b></summary>
+
+#### 1. **Clone the repository**
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Lagden-Development/rickbot.git
 cd rickbot
 ```
 
-2. **Create a virtual environment**
+#### 2. **Create a virtual environment**
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-3. **Install dependencies**
+#### 3. **Install dependencies**
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **Set up environment variables**
+#### 4. **Set up environment variables**
 
 Create a `.env` file in the project root:
 
@@ -54,9 +71,9 @@ DISCORD_TOKEN=your_bot_token_here
 MONGO_URI=mongodb://localhost:27017
 ```
 
-**⚠️ SECURITY WARNING:** Never commit your `.env` file to version control! It contains sensitive credentials.
+> **⚠️ SECURITY WARNING:** Never commit your `.env` file to version control! It contains sensitive credentials.
 
-5. **Configure the bot**
+#### 5. **Configure the bot**
 
 Copy the example configuration:
 
@@ -69,20 +86,22 @@ Edit `config.yaml` and set:
 - `dev_guild_id`: (Optional) Your test server ID for instant command syncing
 - `owner_ids`: List of user IDs who can use owner-only commands
 
-6. **Run the bot**
+#### 6. **Run the bot**
 
 ```bash
 python app.py
 ```
 
-## Configuration
+</details>
+
+## ⚙️ Configuration
 
 ### Environment Variables
 
 The bot uses environment variables for sensitive data. Set these in your `.env` file:
 
 | Variable | Description | Required |
-|----------|-------------|----------|
+|:---------|:------------|:--------:|
 | `DISCORD_TOKEN` | Your Discord bot token | ✅ Yes |
 | `MONGO_URI` | MongoDB connection string | ✅ Yes |
 
@@ -90,7 +109,8 @@ The bot uses environment variables for sensitive data. Set these in your `.env` 
 
 The `config.yaml` file controls all bot behavior. Key sections:
 
-#### Bot Settings
+<details>
+<summary><b>Bot Settings</b></summary>
 
 ```yaml
 bot:
@@ -103,7 +123,10 @@ bot:
   sync_commands_on_ready: true         # Auto-sync commands
 ```
 
-#### Discord Intents
+</details>
+
+<details>
+<summary><b>Discord Intents</b></summary>
 
 ```yaml
 intents:
@@ -114,9 +137,12 @@ intents:
   presences: false          # ⚠️ Privileged
 ```
 
-**Note:** Privileged intents must be enabled in the [Discord Developer Portal](https://discord.com/developers/applications).
+> **Note:** Privileged intents must be enabled in the [Discord Developer Portal](https://discord.com/developers/applications).
 
-#### MongoDB Settings
+</details>
+
+<details>
+<summary><b>MongoDB Settings</b></summary>
 
 ```yaml
 mongodb:
@@ -127,7 +153,10 @@ mongodb:
   retry_writes: true             # Enable retry writes
 ```
 
-#### Observability
+</details>
+
+<details>
+<summary><b>Observability</b></summary>
 
 ```yaml
 observability:
@@ -139,9 +168,12 @@ observability:
   aggregate_metrics_interval: 300 # Metric snapshots every 5 minutes
 ```
 
-## MongoDB Setup
+</details>
 
-### Local Installation
+## 🗄️ MongoDB Setup
+
+<details>
+<summary><b>Local Installation</b></summary>
 
 **macOS (Homebrew):**
 ```bash
@@ -162,18 +194,23 @@ sudo systemctl start mongod
 **Windows:**
 Download from [mongodb.com](https://www.mongodb.com/try/download/community)
 
-### MongoDB Atlas (Cloud)
+</details>
+
+<details>
+<summary><b>MongoDB Atlas (Cloud)</b></summary>
 
 1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/cloud/atlas)
 2. Get your connection string
 3. Set in `.env`: `MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/`
 
-## Commands
+</details>
+
+## 📝 Commands
 
 ### User Commands
 
 | Command | Description |
-|---------|-------------|
+|:--------|:------------|
 | `/ping` | Check bot latency |
 | `/info` | View bot information and statistics |
 | `/stats` | Detailed command usage statistics |
@@ -182,7 +219,7 @@ Download from [mongodb.com](https://www.mongodb.com/try/download/community)
 ### Admin Commands (Requires Permissions)
 
 | Command | Description | Permission |
-|---------|-------------|------------|
+|:--------|:------------|:-----------|
 | `/kick` | Kick a member | Kick Members |
 | `/ban` | Ban a member or user | Ban Members |
 | `/unban` | Unban a user | Ban Members |
@@ -194,16 +231,17 @@ Download from [mongodb.com](https://www.mongodb.com/try/download/community)
 ### Owner Commands
 
 | Command | Description |
-|---------|-------------|
+|:--------|:------------|
 | `/reload` | Hot reload a cog |
 | `/sync` | Sync slash commands |
 | `/errors` | View error logs from database |
 | `/metrics` | View performance metrics |
 | `/dbstats` | View database statistics |
 
-## Development
+## 🛠️ Development
 
-### Project Structure
+<details>
+<summary><b>Project Structure</b></summary>
 
 ```
 rickbot/
@@ -229,7 +267,10 @@ rickbot/
 └── requirements.txt       # Python dependencies
 ```
 
-### Creating a New Cog
+</details>
+
+<details>
+<summary><b>Creating a New Cog</b></summary>
 
 1. Create a new file in `cogs/` (e.g., `mycog.py`)
 2. Use this template:
@@ -267,6 +308,8 @@ async def setup(bot: "RickBot"):
 
 3. The bot will automatically load it on startup
 
+</details>
+
 ### Hot Reloading
 
 During development, use `/reload <cog_name>` to reload cogs without restarting:
@@ -283,12 +326,15 @@ The project uses Black for code formatting:
 black .
 ```
 
-## Database Collections
+## 💾 Database Collections
+
+<details>
+<summary><b>Click to view database collections</b></summary>
 
 The bot uses these MongoDB collections:
 
 | Collection | Purpose |
-|------------|---------|
+|:-----------|:--------|
 | `command_logs` | Every command execution with timing and args |
 | `error_logs` | Detailed error information with tracebacks |
 | `metrics` | Periodic snapshots of bot performance |
@@ -305,7 +351,9 @@ db.command_logs.find().limit(5).pretty()
 db.error_logs.find({resolved: false}).pretty()
 ```
 
-## Production Deployment
+</details>
+
+## 🚢 Production Deployment
 
 ### Security Checklist
 
@@ -334,29 +382,40 @@ The bot provides comprehensive observability:
 
 Use the `/errors` and `/metrics` commands to view real-time data.
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Bot won't start
+<details>
+<summary><b>Bot won't start</b></summary>
 
 - **Check MongoDB**: Ensure MongoDB is running
 - **Verify credentials**: Check your `.env` file
 - **Check config.yaml**: Ensure application_id is correct
 - **Check logs**: Look for error messages in the console
 
-### Commands not showing
+</details>
+
+<details>
+<summary><b>Commands not showing</b></summary>
 
 - **Check intents**: Ensure required intents are enabled
 - **Sync commands**: Use `/sync` or restart the bot
 - **Check dev_guild_id**: Set to your test server for instant updates
 - **Wait**: Global commands can take up to 1 hour to sync
 
-### Permission errors
+</details>
+
+<details>
+<summary><b>Permission errors</b></summary>
 
 - **Bot role position**: Ensure bot's role is above target roles
 - **Bot permissions**: Grant required permissions in server settings
 - **Command permissions**: Check Discord's command permissions settings
 
-## Contributing
+</details>
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -366,13 +425,13 @@ Use the `/errors` and `/metrics` commands to view real-time data.
 6. Push: `git push origin feature/amazing-feature`
 7. Open a Pull Request
 
-## Support
+## 💬 Support
 
 - **Documentation**: [Discord.py Docs](https://discordpy.readthedocs.io/)
-- **Issues**: Open an issue on GitHub
-- **Discord**: Join our support server (if applicable)
+- **Issues**: [Open an issue on GitHub](https://github.com/Lagden-Development/rickbot/issues)
+- **Discord**: [Join our support server](https://discord.gg/zXumZ5jsBF)
 
-## Credits
+## 🙏 Credits
 
 Built with:
 - [discord.py](https://github.com/Rapptz/discord.py) - Discord API wrapper
@@ -382,4 +441,10 @@ Built with:
 
 ---
 
-Made with ❤️ by Lagden Development
+<div align="center">
+
+Made with ❤️ by **Lagden Development**
+
+[⬆ Back to Top](#-rickbot-20)
+
+</div>
