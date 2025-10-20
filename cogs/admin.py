@@ -9,9 +9,12 @@ from discord import app_commands
 from discord.ext import commands
 from typing import TYPE_CHECKING, Optional, Literal
 from datetime import timedelta
+import logging
 
 from helpers.colors import MAIN_EMBED_COLOR, ERROR_EMBED_COLOR, SUCCESS_EMBED_COLOR
 from helpers.ui import ConfirmationView
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from core.bot import RickBot
@@ -149,7 +152,9 @@ class Admin(commands.Cog):
                 )
                 await member.send(embed=dm_embed)
             except discord.Forbidden:
-                pass  # Can't DM user
+                logger.debug(
+                    f"Could not DM {member} ({member.id}) about kick - DMs disabled or blocked"
+                )
 
             # Kick the member
             await member.kick(reason=f"{interaction.user} | {reason}")
@@ -296,7 +301,9 @@ class Admin(commands.Cog):
                     )
                     await target.send(embed=dm_embed)
                 except discord.Forbidden:
-                    pass  # Can't DM user
+                    logger.debug(
+                        f"Could not DM {target} ({target.id}) about ban - DMs disabled or blocked"
+                    )
 
             # Ban the user
             await interaction.guild.ban(
