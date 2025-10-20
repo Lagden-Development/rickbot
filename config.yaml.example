@@ -1,0 +1,122 @@
+# RickBot 2.0 Configuration
+# ==========================
+# Production-grade Discord bot framework with database-first observability
+#
+# Environment Variables:
+# - Use ${ENV_VAR} syntax to reference environment variables
+# - Create a .env file with: DISCORD_TOKEN=your_token_here
+#                           MONGO_URI=mongodb://localhost:27017
+
+bot:
+  # Discord Bot Token (REQUIRED)
+  # Get from: https://discord.com/developers/applications
+  token: ${DISCORD_TOKEN}
+
+  # Application ID (REQUIRED)
+  # Found in Discord Developer Portal -> General Information
+  application_id: 123456789012345678
+
+  # Dev Guild ID (optional - for instant command syncing during development)
+  # Set to your test server ID for faster iteration
+  # Leave as null for global commands (takes up to 1 hour to sync)
+  dev_guild_id: null
+
+  # Owner User IDs (optional - for owner-only commands)
+  owner_ids: []
+    # - 123456789012345678
+
+  # Bot Status
+  status_text: "Ready for commands"
+  status_type: "playing"  # Options: playing, watching, listening, competing
+
+  # Auto-sync commands on startup
+  sync_commands_on_ready: true
+
+intents:
+  # Required intents for basic slash command bot
+  guilds: true
+  guild_messages: true
+  dm_messages: true
+  integrations: true
+
+  # Optional intents (disable what you don't need for better performance)
+  members: false          # ⚠️ PRIVILEGED - enable in Discord Portal if needed
+  message_content: false  # ⚠️ PRIVILEGED - not needed for slash commands
+  presences: false        # ⚠️ PRIVILEGED - user status tracking
+  guild_reactions: false
+  dm_reactions: false
+  guild_typing: false
+  dm_typing: false
+  voice_states: false
+  webhooks: false
+  invites: false
+  auto_moderation: false
+  auto_moderation_configuration: false
+  auto_moderation_execution: false
+  polls: false
+
+mongodb:
+  # MongoDB Connection URI (REQUIRED)
+  # Examples:
+  #   Local: mongodb://localhost:27017
+  #   Atlas: mongodb+srv://username:password@cluster.mongodb.net/
+  uri: ${MONGO_URI}
+
+  # Database name
+  database: "rickbot"
+
+  # Connection pool size (1-100)
+  pool_size: 10
+
+  # Connection timeout in milliseconds
+  timeout_ms: 5000
+
+  # Enable retry writes (recommended)
+  retry_writes: true
+
+  # Collection names (customize if needed)
+  # command_logs_collection: "command_logs"
+  # error_logs_collection: "error_logs"
+  # metrics_collection: "metrics"
+  # guild_settings_collection: "guild_settings"
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+
+  # Log format: text or json
+  # Use json for production logging services
+  format: "text"
+
+  # Log file path (optional)
+  # file: "logs/rickbot.log"
+  file: null
+
+  # File rotation size
+  rotation: "100 MB"
+
+  # Log discord.py library internals (very verbose)
+  log_discord_library: false
+
+observability:
+  # Track every command execution in database
+  track_command_execution: true
+
+  # Track command timing/performance
+  track_command_timing: true
+
+  # Track command arguments (⚠️ May contain PII - disable if privacy-sensitive)
+  track_command_args: true
+
+  # Track errors in database
+  track_errors: true
+
+  # Error reference code length (shown to users)
+  error_reference_length: 6
+
+  # Store full error tracebacks in database
+  store_error_traceback: true
+
+  # How often to save metric snapshots (seconds)
+  # Set to 0 to disable periodic snapshots
+  aggregate_metrics_interval: 300  # 5 minutes

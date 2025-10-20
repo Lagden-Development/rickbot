@@ -1,148 +1,159 @@
 """
-(c) 2024 Lagden Development (All Rights Reserved)
+(c) 2025 Lagden Development (All Rights Reserved)
 Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
 See https://github.com/Lagden-Development/.github/blob/main/LICENSE for more information.
 
-This script is responsible for running the bot. It sets up the necessary environment, handles signals for
-graceful shutdowns, and initiates the bot's main loop. The bot's core functionality is encapsulated in the
-RickBot class, which is imported and used here.
+RickBot 2.0 - Application Entry Point
+
+Production-grade Discord bot with graceful shutdown and structured logging.
 """
 
-import os
-import configparser
-import getpass
 import asyncio
 import signal
-from typing import NoReturn
+import sys
+import warnings
+from pathlib import Path
+import logging
+import time
 from dotenv import load_dotenv
-from contextlib import suppress
 
-from helpers.logs import RICKLOG_MAIN
-from rickbot.main import RickBot
+from core import RickBot, Config
+from helpers.logger import (
+    ColoredFormatter,
+    print_startup_banner,
+    print_box,
+    format_duration,
+    print_checkmark,
+)
+from helpers.rickbot import get_goodbye_message
 
-# Adjust the current working directory
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+# Configure colored logging
+handler = logging.StreamHandler()
+formatter = ColoredFormatter(
+    "[{asctime}] [{levelname}] {name}: {message}",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    style="{",
+)
+handler.setFormatter(formatter)
+
+# Configure root logger
+logging.root.handlers.clear()
+logging.root.addHandler(handler)
+logging.root.setLevel(logging.INFO)
+
+# Suppress asyncio ResourceWarnings (harmless Discord.py cleanup warnings)
+warnings.filterwarnings("ignore", category=ResourceWarning, message=".*unclosed.*")
+
+logger = logging.getLogger(__name__)
 
 
-def get_valid_input(
-    prompt: str,
-    input_type: str = "input",
-    error_message: str = "Invalid input. Please try again.",
-) -> str:
+async def main() -> None:
     """
-    Get valid input from the user.
+    Main application entry point.
 
-    Args:
-        prompt (str): The prompt to display to the user.
-        input_type (str): The type of input to get ("input" or "getpass").
-        error_message (str): The error message to display if input is invalid.
-
-    Returns:
-        str: The valid input from the user.
+    Handles:
+    - Configuration loading
+    - Bot initialization
+    - Graceful shutdown on signals
     """
-    while True:
-        if input_type == "getpass":
-            user_input = getpass.getpass(prompt)
-        else:
-            user_input = input(prompt)
-        if user_input:
-            return user_input
-        RICKLOG_MAIN.error(error_message)
+    # Track total startup time
+    startup_start = time.time()
 
+    # Print startup banner
+    print_startup_banner("RickBot 2.0")
 
-def initial_setup_process() -> None:
-    """
-    The initial setup process for the bot.
-    """
-    RICKLOG_MAIN.info(
-        "It looks like this is your first time running RickBot, so we'll need to do some initial setup..."
-    )
+    # Change to script directory
+    script_dir = Path(__file__).parent
+    import os
 
-    token = get_valid_input(
-        "Enter your bot's token: ", "getpass", "Invalid token. Please try again."
-    )
-    mongo_uri = get_valid_input(
-        "Enter your MongoDB URI: ", "getpass", "Invalid MongoDB URI. Please try again."
-    )
-    prefix = get_valid_input("Enter your bot's prefix: ")
-    dev_id = get_valid_input("Enter your Discord ID: ")
+    os.chdir(script_dir)
 
-    # Create the .env file
-    with open(".env", "w") as f:
-        f.write(f"TOKEN={token}\n")
-        f.write(f"MONGO_URI={mongo_uri}\n")
+    # Load environment variables
+    load_dotenv()
+    print_checkmark("Environment variables loaded", success=True)
 
-    # Update the config.ini file
-    config = configparser.ConfigParser()
-    config.read("config.ini")
-    config["MAIN"]["dev"] = dev_id
-    config["BOT"]["prefix"] = prefix
-    with open("config.ini", "w") as f:
-        config.write(f)
+    # Check if config exists, create template if not
+    config_path = Path("config.yaml")
+    if not config_path.exists():
+        logger.warning("Config file not found, creating template...")
+        Config.save_template(config_path)
+        logger.error(
+            "Configuration template created at config.yaml\n"
+            "Please edit this file and set your environment variables before starting the bot."
+        )
+        sys.exit(1)
 
-    RICKLOG_MAIN.info(
-        "Initial setup complete. You can further configure the bot by editing the config.ini file."
-    )
-    RICKLOG_MAIN.info(
-        "To use a different configuration, delete the .env file and run the script again."
-    )
-    RICKLOG_MAIN.info(
-        "For help, please visit: https://github.com/Lagden-Development/rickbot"
-    )
+    # Load configuration
+    try:
+        config = Config.load(config_path)
+        print_checkmark("Configuration loaded successfully", success=True)
+    except Exception as e:
+        print_checkmark(f"Failed to load configuration: {e}", success=False)
+        logger.error(f"Failed to load configuration: {e}", exc_info=True)
+        sys.exit(1)
 
+    # Configure logging level from config
+    logging.getLogger().setLevel(logging.getLevelName(config.logging.level))
 
-# Initialize the bot
-bot = RickBot()
+    if config.logging.log_discord_library:
+        logging.getLogger("discord").setLevel(logging.DEBUG)
+    else:
+        logging.getLogger("discord").setLevel(logging.WARNING)
+        logging.getLogger("discord.http").setLevel(logging.WARNING)
 
+    # Initialize bot
+    bot = RickBot(config)
 
-async def main() -> NoReturn:
-    """
-    The main function responsible for starting and managing the bot.
-
-    This function sets up signal handlers for graceful shutdowns and then starts the bot.
-    It handles SIGTERM and SIGINT signals for proper termination.
-
-    Returns:
-        NoReturn: This function runs indefinitely until interrupted.
-
-    Raises:
-        Exception: Any unhandled exceptions during bot operation are logged.
-    """
+    # Setup graceful shutdown
     loop = asyncio.get_running_loop()
 
     def signal_handler(sig: signal.Signals) -> None:
-        """
-        Handle incoming signals for bot shutdown.
+        """Handle shutdown signals"""
+        logger.info(f"Received signal {sig.name}, shutting down gracefully...")
+        asyncio.create_task(bot.close())
 
-        Args:
-            sig (signal.Signals): The signal received (SIGTERM or SIGINT).
-        """
-        RICKLOG_MAIN.info(f"Received signal {sig.name}. Initiating shutdown...")
-        asyncio.create_task(bot.shutdown(sig.name))
+    # Register signal handlers (Unix only)
+    if sys.platform != "win32":
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
+    else:
+        # Windows doesn't support add_signal_handler
+        signal.signal(signal.SIGINT, lambda s, f: signal_handler(signal.SIGINT))
 
-    for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
-
+    # Run bot
     try:
-        await bot.start_bot()
+        print()  # Empty line before starting
+        logger.debug("Starting RickBot...")
+        await bot.start(config.bot.token)
+    except KeyboardInterrupt:
+        print()  # Empty line before shutdown message
+        logger.info("Keyboard interrupt received")
     except Exception as e:
-        RICKLOG_MAIN.error(f"Unhandled exception in main loop: {e}", exc_info=True)
+        print()  # Empty line before error
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        sys.exit(1)
     finally:
-        RICKLOG_MAIN.info("Rickbot is shutting down...")
-        await bot.close()
+        if not bot.is_closed():
+            await bot.close()
+
+        # Calculate total runtime
+        total_runtime = time.time() - startup_start
+
+        # Print shutdown box
+        print()
+        shutdown_content = [
+            f"Total runtime: {format_duration(total_runtime)}",
+            "All systems shut down gracefully",
+            "",
+            get_goodbye_message(),
+        ]
+        print_box("RickBot Shutdown Complete", shutdown_content, color="magenta")
+        print()
 
 
 if __name__ == "__main__":
-    """
-    Entry point of the script.
-
-    Runs the main coroutine and handles graceful shutdown on interruption.
-    """
-    if not os.path.exists(".env"):
-        initial_setup_process()
-
-    load_dotenv()
-
-    with suppress(KeyboardInterrupt, SystemExit):
+    """Entry point"""
+    try:
         asyncio.run(main())
-    RICKLOG_MAIN.info("Rickbot has shut down successfully.")
+    except KeyboardInterrupt:
+        pass  # Handled in main()

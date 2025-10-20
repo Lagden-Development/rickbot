@@ -1,3 +1,18 @@
+# Core Dependencies
+discord.py==2.4.0
+motor==3.6.0              # Async MongoDB driver (compatible with pymongo 4.10+)
+PyYAML==6.0.2             # YAML configuration
+pydantic==2.9.2           # Data validation and settings
+pydantic-settings==2.6.1  # Environment variable support
+python-dotenv==1.0.1      # .env file support
+
+# Logging
+structlog==24.4.0         # Structured logging
+
+# System monitoring
+psutil==6.1.0             # Process and system utilities
+
+# Existing dependencies (kept for compatibility)
 aiodns==3.2.0
 aiohappyeyeballs==2.4.3
 aiohttp==3.10.10
@@ -11,7 +26,6 @@ cffi==1.17.1
 charset-normalizer==3.4.0
 click==8.1.7
 discord-timestamps @ git+https://github.com/Lagden-Development/discord-timestamps@04f9609d7f837e213d797338767a41eb1e504ad2
-discord.py==2.4.0
 dnspython==2.7.0
 frozenlist==1.4.1
 idna==3.10
@@ -24,10 +38,9 @@ platformdirs==4.3.6
 propcache==0.2.0
 pycares==4.4.0
 pycparser==2.22
-pymongo==4.10.1
+pymongo==4.9.2
 PyNaCl==1.5.0
 python-dateutil==2.9.0.post0
-python-dotenv==1.0.1
 requests==2.32.3
 six==1.16.0
 termcolor==2.5.0
