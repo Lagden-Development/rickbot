@@ -236,7 +236,6 @@ rickbot/
 
 ```python
 """
-(c) 2025 Lagden Development (All Rights Reserved)
 Your cog description here.
 """
 
@@ -366,14 +365,6 @@ Use the `/errors` and `/metrics` commands to view real-time data.
 5. Commit: `git commit -m 'Add amazing feature'`
 6. Push: `git push origin feature/amazing-feature`
 7. Open a Pull Request
-
-## License
-
-(c) 2025 Lagden Development (All Rights Reserved)
-
-Licensed for non-commercial use with attribution required; provided 'as is' without warranty.
-
-See [LICENSE](https://github.com/Lagden-Development/.github/blob/main/LICENSE) for more information.
 
 ## Support
 
